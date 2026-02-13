@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using static Android.Icu.Text.CaseMap;
 
 namespace DocumentalManager.ViewModels
 {

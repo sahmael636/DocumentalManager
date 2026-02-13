@@ -1,9 +1,7 @@
-﻿using Android.Media.TV;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DocumentalManager.Models;
 using DocumentalManager.Services;
-using IntelliJ.Lang.Annotations;
 using System.Collections.ObjectModel;
 
 namespace DocumentalManager.ViewModels
@@ -189,14 +187,14 @@ namespace DocumentalManager.ViewModels
                     {
                         Codigo = subserie.Codigo;
                         Nombre = subserie.Nombre;
-                        AG = subserie.AG;
-                        AC = subserie.AC;
+                        ag = subserie.AG;
+                        ac = subserie.AC;
                         P = subserie.P;
-                        EL = subserie.EL;
+                        el = subserie.EL;
                         FormatoDigital = subserie.FormatoDigital;
-                        CT = subserie.CT;
+                        ct = subserie.CT;
                         E = subserie.E;
-                        MT = subserie.MT;
+                        mt = subserie.MT;
                         S = subserie.S;
                         Procedimiento = subserie.Procedimiento;
                         SelectedItemPadre = ItemsPadre.FirstOrDefault(i => ((Serie)i).Id == subserie.SerieId);
@@ -293,14 +291,14 @@ namespace DocumentalManager.ViewModels
                         Codigo = Codigo,
                         Nombre = Nombre,
                         SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : 0,
-                        AG = AG,
-                        AC = AC,
+                        AG = ag,
+                        AC = ac,
                         P = P,
-                        EL = EL,
+                        EL = el,
                         FormatoDigital = FormatoDigital,
-                        CT = CT,
+                        CT = ct,
                         E = E,
-                        MT = MT,
+                        MT = mt,
                         S = S,
                         Procedimiento = Procedimiento
                     });
@@ -382,14 +380,14 @@ namespace DocumentalManager.ViewModels
                         subserie.Codigo = Codigo;
                         subserie.Nombre = Nombre;
                         subserie.SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : 0;
-                        subserie.AG = AG;
-                        subserie.AC = AC;
+                        subserie.AG = ag;
+                        subserie.AC = ac;
                         subserie.P = P;
-                        subserie.EL = EL;
+                        subserie.EL = el;
                         subserie.FormatoDigital = FormatoDigital;
-                        subserie.CT = CT;
+                        subserie.CT = ct;
                         subserie.E = E;
-                        subserie.MT = MT;
+                        subserie.MT = mt;
                         subserie.S = S;
                         subserie.Procedimiento = Procedimiento;
                         await _databaseService.UpdateAsync(subserie);

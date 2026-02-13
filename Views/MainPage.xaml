@@ -3,11 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DocumentalManager.Views.MainPage"
              xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             xmlns:converters="clr-namespace:DocumentalManager.Converters"
              x:DataType="viewmodels:MainViewModel"
-             Title="{Binding Title}">
-
+             Title="Inicio">
+    
     <VerticalStackLayout Spacing="20" Padding="20" VerticalOptions="Center">
-
+        
         <Border StrokeThickness="2"
                 Stroke="#2b0b98"
                 Padding="20"
@@ -15,21 +16,21 @@
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="20"/>
             </Border.StrokeShape>
-
+            
             <VerticalStackLayout Spacing="30">
                 <Label Text="Gestor Documental"
                        FontSize="28"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
                        TextColor="#2b0b98"/>
-
+                
                 <Label Text="Tablas de Retención Documental"
                        FontSize="18"
                        HorizontalOptions="Center"
                        TextColor="#666666"/>
             </VerticalStackLayout>
         </Border>
-
+        
         <VerticalStackLayout Spacing="15" Margin="0,30,0,0">
             <Button Text="TABLAS"
                     Command="{Binding GoToTablasCommand}"
@@ -38,7 +39,7 @@
                     FontSize="18"
                     HeightRequest="60"
                     CornerRadius="10"/>
-
+            
             <Button Text="CONSULTA"
                     Command="{Binding GoToConsultaCommand}"
                     BackgroundColor="#4CAF50"
@@ -47,6 +48,6 @@
                     HeightRequest="60"
                     CornerRadius="10"/>
         </VerticalStackLayout>
-
+        
     </VerticalStackLayout>
 </ContentPage>

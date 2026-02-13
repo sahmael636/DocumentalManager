@@ -2,9 +2,24 @@
 
 namespace DocumentalManager.Views;
 
+[QueryProperty(nameof(TableName), "tableName")]
 public partial class ListaPage : ContentPage
 {
     private ListaViewModel _viewModel;
+
+    private string _tableName;
+    public string TableName
+    {
+        get => _tableName;
+        set
+        {
+            _tableName = value;
+            if (_viewModel != null)
+            {
+                _viewModel.TableName = value;
+            }
+        }
+    }
 
     public ListaPage(ListaViewModel viewModel)
     {
@@ -19,29 +34,9 @@ public partial class ListaPage : ContentPage
 
         if (BindingContext is ListaViewModel vm)
         {
-            vm.TableName = GetTableName();
+            // TableName ya se asignó automáticamente por el QueryProperty
             await vm.LoadDataAsync();
         }
-    }
-
-    private string GetTableName()
-    {
-        if (Shell.Current?.CurrentItem?.CurrentItem is ShellContent shellContent)
-        {
-            var route = shellContent.Route;
-            var parameters = Shell.Current.CurrentPage?.BindingContext?.GetType()
-                .GetProperty("TableName")?.GetValue(Shell.Current.CurrentPage.BindingContext);
-
-            return parameters?.ToString() ?? "Fondos";
-        }
-
-        // Obtener de query parameters
-        if (Shell.Current?.CurrentPage?.BindingContext is ListaViewModel vm)
-        {
-            return vm.TableName;
-        }
-
-        return "Fondos";
     }
 
     private void OnSearchTextChanged(object sender, TextChangedEventArgs e)

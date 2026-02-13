@@ -2,9 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DocumentalManager.Models;
 using DocumentalManager.Services;
-using IntelliJ.Lang.Annotations;
 using System.Collections.ObjectModel;
-using static Android.Icu.Text.CaseMap;
 
 namespace DocumentalManager.ViewModels
 {
