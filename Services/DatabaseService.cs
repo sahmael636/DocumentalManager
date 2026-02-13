@@ -3,6 +3,7 @@ using SQLite;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace DocumentalManager.Services
 {
@@ -87,6 +88,80 @@ namespace DocumentalManager.Services
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Borra en cascada: primero borra todos los hijos (recursivo) y luego la entidad padre.
+        /// </summary>
+        public async Task DeleteCascadeAsync(string tableName, int id)
+        {
+            switch (tableName)
+            {
+                case "Fondo":
+                    var subfondos = await _database.Table<Subfondo>().Where(s => s.FondoId == id).ToListAsync();
+                    foreach (var s in subfondos)
+                    {
+                        await DeleteCascadeAsync("Subfondo", s.Id);
+                    }
+                    var fondo = await _database.FindAsync<Fondo>(id);
+                    if (fondo != null) await _database.DeleteAsync(fondo);
+                    break;
+
+                case "Subfondo":
+                    var unidades = await _database.Table<UnidadAdministrativa>().Where(u => u.SubfondoId == id).ToListAsync();
+                    foreach (var u in unidades)
+                    {
+                        await DeleteCascadeAsync("UnidadAdministrativa", u.Id);
+                    }
+                    var subfondo = await _database.FindAsync<Subfondo>(id);
+                    if (subfondo != null) await _database.DeleteAsync(subfondo);
+                    break;
+
+                case "UnidadAdministrativa":
+                    var oficinas = await _database.Table<OficinaProductora>().Where(o => o.UnidadAdministrativaId == id).ToListAsync();
+                    foreach (var o in oficinas)
+                    {
+                        await DeleteCascadeAsync("OficinaProductora", o.Id);
+                    }
+                    var unidad = await _database.FindAsync<UnidadAdministrativa>(id);
+                    if (unidad != null) await _database.DeleteAsync(unidad);
+                    break;
+
+                case "OficinaProductora":
+                    var series = await _database.Table<Serie>().Where(s => s.OficinaProductoraId == id).ToListAsync();
+                    foreach (var s in series)
+                    {
+                        await DeleteCascadeAsync("Serie", s.Id);
+                    }
+                    var oficina = await _database.FindAsync<OficinaProductora>(id);
+                    if (oficina != null) await _database.DeleteAsync(oficina);
+                    break;
+
+                case "Serie":
+                    var subseries = await _database.Table<Subserie>().Where(s => s.SerieId == id).ToListAsync();
+                    foreach (var ss in subseries)
+                    {
+                        await DeleteCascadeAsync("Subserie", ss.Id);
+                    }
+                    var serie = await _database.FindAsync<Serie>(id);
+                    if (serie != null) await _database.DeleteAsync(serie);
+                    break;
+
+                case "Subserie":
+                    var tipos = await _database.Table<TipoDocumental>().Where(t => t.SubserieId == id).ToListAsync();
+                    foreach (var t in tipos)
+                    {
+                        await DeleteCascadeAsync("TipoDocumental", t.Id);
+                    }
+                    var subserie = await _database.FindAsync<Subserie>(id);
+                    if (subserie != null) await _database.DeleteAsync(subserie);
+                    break;
+
+                case "TipoDocumental":
+                    var tipo = await _database.FindAsync<TipoDocumental>(id);
+                    if (tipo != null) await _database.DeleteAsync(tipo);
+                    break;
+            }
         }
 
         // Métodos de búsqueda

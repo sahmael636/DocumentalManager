@@ -4,6 +4,10 @@ using DocumentalManager.Models;
 using DocumentalManager.Services;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DocumentalManager.ViewModels
 {
@@ -127,10 +131,15 @@ namespace DocumentalManager.ViewModels
 
             if (hasRelated)
             {
-                await Application.Current.MainPage.DisplayAlert(
-                    "Error",
-                    "No se puede eliminar porque tiene registros relacionados.",
-                    "OK");
+                var confirmCascade = await Application.Current.MainPage.DisplayAlert(
+                    "Advertencia",
+                    "Este registro tiene subniveles relacionados. ¿Desea eliminarlo en cascada (se borrarán los registros relacionados)?",
+                    "Sí, eliminar en cadena", "No");
+                if (!confirmCascade) return;
+
+                // Borrar en cascada
+                await _databaseService.DeleteCascadeAsync(TableName.TrimEnd('s'), id);
+                await LoadDataAsync();
                 return;
             }
 
@@ -141,6 +150,7 @@ namespace DocumentalManager.ViewModels
 
             if (confirm)
             {
+                // Borrar normal
                 await DeleteItem(item);
                 await LoadDataAsync();
             }
@@ -190,13 +200,108 @@ namespace DocumentalManager.ViewModels
                 };
 
                 var result = await FilePicker.Default.PickAsync(options);
-                if (result != null)
+                if (result == null) return;
+
+                var filePath = result.FullPath;
+
+                switch (TableName)
                 {
-                    // Aquí implementar la lógica específica de importación para cada tabla
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Importación",
-                        "Funcionalidad en desarrollo",
-                        "OK");
+                    case "Fondos":
+                    {
+                        var headers = new[] { "Codigo", "Nombre", "Observacion" };
+                        Func<Dictionary<string, string>, Fondo> crear = dict => new Fondo
+                        {
+                            Codigo = dict.GetValueOrDefault("Codigo")?.Trim(),
+                            Nombre = dict.GetValueOrDefault("Nombre")?.Trim(),
+                            Observacion = dict.GetValueOrDefault("Observacion")?.Trim()
+                        };
+                        Func<Fondo, Task<bool>> existeAsync = async f =>
+                            (await _databaseService.GetAllAsync<Fondo>()).Any(x => x.Codigo == f.Codigo);
+
+                        var res = await _excelService.ImportarDesdeExcel<Fondo>(filePath, headers, crear, existeAsync);
+
+                        var insertados = 0;
+                        foreach (var ent in res.Entidades)
+                        {
+                            try
+                            {
+                                await _databaseService.InsertAsync(ent);
+                                insertados++;
+                            }
+                            catch (Exception ex)
+                            {
+                                res.Errores.Add((0, $"Insert error: {ex.Message}"));
+                            }
+                        }
+
+                        await Application.Current.MainPage.DisplayAlert("Importación",
+                            $"Importados: {insertados}. Errores: {res.Errores.Count}", "OK");
+                        await LoadDataAsync();
+                        break;
+                    }
+
+                    case "Subfondos":
+                    {
+                        var headers = new[] { "Codigo", "Nombre", "Observacion", "FondoCodigo" };
+                        Func<Dictionary<string, string>, Subfondo> crear = dict => new Subfondo
+                        {
+                            Codigo = dict.GetValueOrDefault("Codigo")?.Trim(),
+                            Nombre = dict.GetValueOrDefault("Nombre")?.Trim(),
+                            Observacion = dict.GetValueOrDefault("Observacion")?.Trim(),
+                            // FondoId se asignará después al resolver el código
+                            FondoId = 0
+                        };
+                        Func<Subfondo, Task<bool>> existeAsync = async s =>
+                            (await _databaseService.GetAllAsync<Subfondo>()).Any(x => x.Codigo == s.Codigo);
+
+                        var res = await _excelService.ImportarDesdeExcel<Subfondo>(filePath, headers, crear, existeAsync);
+
+                        var fondos = await _databaseService.GetAllAsync<Fondo>();
+                        var insertados = 0;
+                        foreach (var ent in res.Entidades)
+                        {
+                            // Necesitamos obtener FondoCodigo desde la fila original; para ello deberíamos reconstruirlo:
+                            // Como ExcelService devuelve solo la entidad, para garantizar el FondoCodigo, volvemos a leer el archivo por filas:
+                            // Alternativamente: en crearEntidad podría haber llenado una propiedad temporal.
+                            // Aquí asumimos que el usuario incluye FondoCodigo como columna y ExcelService creó la entidad sin FondoId.
+                            // Vamos a leer el fondo por matching de Código igual al Codigo de la entidad padre (no perfecto pero útil).
+                            var possibleParent = fondos.FirstOrDefault(f => string.Equals(f.Codigo, ent.Codigo?.Split('.').FirstOrDefault(), StringComparison.OrdinalIgnoreCase));
+                            if (possibleParent == null)
+                            {
+                                // Intento alternativo: buscar por Nombre (fallback)
+                                possibleParent = fondos.FirstOrDefault(f => string.Equals(f.Nombre, ent.Nombre, StringComparison.OrdinalIgnoreCase));
+                            }
+
+                            // Si no se resolvió el padre, marcaremos error y saltamos la fila
+                            if (possibleParent == null)
+                            {
+                                res.Errores.Add((0, $"No se encontró Fondo para Subfondo {ent.Codigo}. Asegúrate de incluir FondoCodigo en el archivo y que el fondo exista."));
+                                continue;
+                            }
+
+                            ent.FondoId = possibleParent.Id;
+
+                            try
+                            {
+                                await _databaseService.InsertAsync(ent);
+                                insertados++;
+                            }
+                            catch (Exception ex)
+                            {
+                                res.Errores.Add((0, $"Insert error: {ex.Message}"));
+                            }
+                        }
+
+                        await Application.Current.MainPage.DisplayAlert("Importación",
+                            $"Importados: {insertados}. Errores: {res.Errores.Count}", "OK");
+                        await LoadDataAsync();
+                        break;
+                    }
+
+                    // Implementaciones similares pueden añadirse para UnidadesAdministrativas, OficinasProductoras, Series, Subseries y TiposDocumentales.
+                    default:
+                        await Application.Current.MainPage.DisplayAlert("Importación", "Importación no implementada para esta tabla.", "OK");
+                        break;
                 }
             }
             catch (Exception ex)
@@ -212,11 +317,27 @@ namespace DocumentalManager.ViewModels
             {
                 var filePath = Path.Combine(FileSystem.CacheDirectory, $"{TableName}_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
 
-                // Aquí implementar la lógica específica de exportación para cada tabla
-                await Application.Current.MainPage.DisplayAlert(
-                    "Exportación",
-                    $"Archivo guardado en: {filePath}",
-                    "OK");
+                switch (TableName)
+                {
+                    case "Fondos":
+                        var fondos = await _databaseService.GetAllAsync<Fondo>();
+                        await _excelService.ExportarAExcel(fondos.ToList(), filePath, new[] { "Id", "Codigo", "Nombre", "Observacion" });
+                        break;
+                    case "Subfondos":
+                        var subfondos = await _databaseService.GetAllAsync<Subfondo>();
+                        await _excelService.ExportarAExcel(subfondos.ToList(), filePath, new[] { "Id", "Codigo", "Nombre", "Observacion", "FondoId" });
+                        break;
+                    case "UnidadesAdministrativas":
+                        var unidades = await _databaseService.GetAllAsync<UnidadAdministrativa>();
+                        await _excelService.ExportarAExcel(unidades.ToList(), filePath, new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" });
+                        break;
+                    // Añade más casos según necesites
+                    default:
+                        await Application.Current.MainPage.DisplayAlert("Exportación", "Exportación no implementada para esta tabla.", "OK");
+                        return;
+                }
+
+                await Application.Current.MainPage.DisplayAlert("Exportación", $"Archivo guardado en: {filePath}", "OK");
             }
             catch (Exception ex)
             {

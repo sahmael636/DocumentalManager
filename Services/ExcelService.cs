@@ -3,59 +3,103 @@ using OfficeOpenXml;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System;
+using System.Linq;
 
 namespace DocumentalManager.Services
 {
     public class ExcelService
     {
-        public async Task<(int Importados, List<(int Fila, string Error)> Errores)> ImportarDesdeExcel<T>(
+        public ExcelService()
+        {
+            // EPPlus requiere indicar el contexto de licencia
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
+        }
+
+        /// <summary>
+        /// Importa basándose en encabezados (fila 1). requiredHeaders define los títulos esperados (case-insensitive).
+        /// crearEntidad recibe un diccionario header->valor (string) y debe construir la entidad T.
+        /// validarExistenciaAsync debe comprobar asincrónicamente si la entidad ya existe.
+        /// Devuelve: cantidad detectada (no necesariamente insertada), lista de errores y entidades parseadas.
+        /// </summary>
+        public async Task<(int Importados, List<(int Fila, string Error)> Errores, List<T> Entidades)> ImportarDesdeExcel<T>(
             string filePath,
-            Dictionary<string, int> columnas,
-            System.Func<Dictionary<string, string>, T> crearEntidad,
-            System.Func<T, bool> validarExistencia) where T : new()
+            string[] requiredHeaders,
+            Func<Dictionary<string, string>, T> crearEntidad,
+            Func<T, Task<bool>> validarExistenciaAsync) where T : new()
         {
             var importados = 0;
             var errores = new List<(int Fila, string Error)>();
+            var entidades = new List<T>();
 
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            using (var package = new ExcelPackage(stream))
             {
-                using (var package = new ExcelPackage(stream))
+                var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+                if (worksheet == null)
                 {
-                    var worksheet = package.Workbook.Worksheets[0];
-                    var rowCount = worksheet.Dimension?.Rows ?? 0;
+                    errores.Add((0, "El archivo no contiene hojas."));
+                    return (0, errores, entidades);
+                }
 
-                    for (int row = 2; row <= rowCount; row++) // Empezar desde fila 2 (asumiendo encabezados)
+                var rowCount = worksheet.Dimension?.Rows ?? 0;
+                var colCount = worksheet.Dimension?.Columns ?? 0;
+                if (rowCount < 2)
+                {
+                    errores.Add((0, "El archivo no contiene filas de datos."));
+                    return (0, errores, entidades);
+                }
+
+                // Leer encabezados (fila 1) y mapear título -> índice (1-based), comparando case-insensitive
+                var headerIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                for (int c = 1; c <= colCount; c++)
+                {
+                    var header = worksheet.Cells[1, c].Text?.Trim();
+                    if (!string.IsNullOrEmpty(header) && !headerIndex.ContainsKey(header))
+                        headerIndex[header] = c;
+                }
+
+                // Validar que están los encabezados requeridos
+                var missing = requiredHeaders.Where(h => !headerIndex.ContainsKey(h)).ToList();
+                if (missing.Any())
+                {
+                    errores.Add((0, $"Faltan encabezados obligatorios: {string.Join(", ", missing)}"));
+                    return (0, errores, entidades);
+                }
+
+                for (int row = 2; row <= rowCount; row++) // Empezar desde fila 2 (asumiendo encabezados)
+                {
+                    try
                     {
-                        try
+                        var datos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var header in headerIndex.Keys)
                         {
-                            var datos = new Dictionary<string, string>();
-                            foreach (var col in columnas)
-                            {
-                                var valor = worksheet.Cells[row, col.Value].Text;
-                                datos[col.Key] = valor;
-                            }
-
-                            var entidad = crearEntidad(datos);
-
-                            if (!validarExistencia(entidad))
-                            {
-                                // Insertar entidad (esto se manejará en el ViewModel)
-                                importados++;
-                            }
-                            else
-                            {
-                                errores.Add((row, "Registro duplicado"));
-                            }
+                            var col = headerIndex[header];
+                            datos[header] = worksheet.Cells[row, col].Text?.Trim() ?? string.Empty;
                         }
-                        catch (System.Exception ex)
+
+                        var entidad = crearEntidad(datos);
+
+                        var existe = await validarExistenciaAsync(entidad);
+                        if (!existe)
                         {
-                            errores.Add((row, ex.Message));
+                            entidades.Add(entidad);
+                            importados++;
                         }
+                        else
+                        {
+                            errores.Add((row, "Registro duplicado"));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errores.Add((row, ex.Message));
                     }
                 }
             }
 
-            return (importados, errores);
+            return (importados, errores, entidades);
         }
 
         public async Task ExportarAExcel<T>(List<T> datos, string filePath, string[] encabezados)
@@ -70,19 +114,29 @@ namespace DocumentalManager.Services
                     worksheet.Cells[1, i + 1].Value = encabezados[i];
                 }
 
-                // Datos
+                // Datos: solo los encabezados enviados serán escritos (busca propiedad por nombre)
                 var propiedades = typeof(T).GetProperties();
                 for (int i = 0; i < datos.Count; i++)
                 {
-                    for (int j = 0; j < propiedades.Length; j++)
+                    for (int j = 0; j < encabezados.Length; j++)
                     {
-                        var valor = propiedades[j].GetValue(datos[i]);
+                        var propName = encabezados[j];
+                        var prop = propiedades.FirstOrDefault(p => string.Equals(p.Name, propName, StringComparison.OrdinalIgnoreCase));
+                        var valor = prop != null ? prop.GetValue(datos[i]) : null;
                         worksheet.Cells[i + 2, j + 1].Value = valor?.ToString() ?? "";
                     }
                 }
 
-                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-                await package.SaveAsAsync(new FileInfo(filePath));
+                // Ajustar columnas si hay contenido
+                if (worksheet.Dimension != null)
+                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                var fi = new FileInfo(filePath);
+                var dir = fi.Directory;
+                if (dir != null && !dir.Exists)
+                    dir.Create();
+
+                await package.SaveAsAsync(fi);
             }
         }
     }
