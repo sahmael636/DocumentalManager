@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DocumentalManager.Views.TablasPage"
+             xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             x:DataType="viewmodels:TablasViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <Label Text="Seleccione una tabla"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,20"/>
+
+            <Button Text="FONDOS"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="Fondos"
+                    BackgroundColor="#2196F3"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+            <Button Text="SUBFONDOS"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="Subfondos"
+                    BackgroundColor="#3F51B5"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+            <Button Text="UNIDADES ADMINISTRATIVAS"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="UnidadesAdministrativas"
+                    BackgroundColor="#673AB7"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+            <Button Text="OFICINAS PRODUCTORAS"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="OficinasProductoras"
+                    BackgroundColor="#9C27B0"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+            <Button Text="SERIES"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="Series"
+                    BackgroundColor="#E91E63"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+            <Button Text="SUBSERIES"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="Subseries"
+                    BackgroundColor="#F44336"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+            <Button Text="TIPOS DOCUMENTALES"
+                    Command="{Binding NavigateToTableCommand}"
+                    CommandParameter="TiposDocumentales"
+                    BackgroundColor="#FF9800"
+                    TextColor="White"
+                    HeightRequest="50"
+                    CornerRadius="8"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

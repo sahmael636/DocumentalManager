@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DocumentalManager.Views.ConsultaPage"
+             xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             x:DataType="viewmodels:ConsultaViewModel"
+             Title="{Binding Title}">
+
+    <Grid RowDefinitions="Auto, Auto, *" Padding="10">
+
+        <!-- Buscador -->
+        <Border Grid.Row="0" 
+                Padding="10"
+                StrokeThickness="1"
+                Stroke="#DDDDDD"
+                Margin="0,0,0,10">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+
+            <Grid ColumnDefinitions="*, Auto">
+                <Entry Grid.Column="0"
+                       Placeholder="Buscar tipo documental..."
+                       Text="{Binding SearchText}"
+                       HeightRequest="40"/>
+
+                <Button Grid.Column="1"
+                        Text="Buscar"
+                        Command="{Binding BuscarCommand}"
+                        BackgroundColor="#4CAF50"
+                        TextColor="White"
+                        WidthRequest="80"
+                        Margin="5,0,0,0"
+                        HeightRequest="40"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator Grid.Row="1"
+                          IsRunning="{Binding IsBusy}"
+                          IsVisible="{Binding IsBusy}"
+                          Color="#2b0b98"
+                          HeightRequest="40"/>
+
+        <!-- Resultados -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Resultados}"
+                        SelectionMode="None"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="15"
+                            Margin="0,0,0,10"
+                            StrokeThickness="1"
+                            Stroke="#2b0b98">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10"/>
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label Text="{Binding CodigoCompleto}" 
+                                   FontAttributes="Bold"
+                                   TextColor="#2b0b98"
+                                   FontSize="16"/>
+
+                            <Label Text="{Binding TipoDocumental}" 
+                                   FontSize="18"
+                                   FontAttributes="Bold"/>
+
+                            <Grid ColumnDefinitions="Auto,*" Margin="0,5,0,0">
+                                <Label Grid.Column="0" Text="Fondo:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Fondo}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Subfondo:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Subfondo}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Unidad Adm.:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding UnidadAdministrativa}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Oficina Prod.:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding OficinaProductora}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Serie:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Serie}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Subserie:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Subserie}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Border BackgroundColor="#F0F0F0"
+                                    Padding="10"
+                                    Margin="0,10,0,0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="5"/>
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="5">
+                                    <Label Text="RETENCIÓN:" FontAttributes="Bold" TextColor="#2b0b98"/>
+
+                                    <Grid ColumnDefinitions="*,*">
+                                        <Label Grid.Column="0" Text="AG:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding AG}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*">
+                                        <Label Grid.Column="0" Text="AC:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding AC}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*">
+                                        <Label Grid.Column="0" Text="Soporte:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding Papel, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Papel'}" 
+                                                          TextColor="{Binding Papel, Converter={StaticResource BoolToColorConverter}}"/>
+                                                    <Span Text=", " IsVisible="{Binding Papel}"/>
+                                                    <Span Text="{Binding Electronico, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Electrónico'}" 
+                                                          TextColor="{Binding Electronico, Converter={StaticResource BoolToColorConverter}}"/>
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*" IsVisible="{Binding !string.IsNullOrEmpty(FormatoDigital)}">
+                                        <Label Grid.Column="0" Text="Formato:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding FormatoDigital}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*">
+                                        <Label Grid.Column="0" Text="Disposición:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding ConservacionTotal, Converter={StaticResource BoolToTextConverter}, ConverterParameter='CT'}" 
+                                                          TextColor="{Binding ConservacionTotal, Converter={StaticResource BoolToColorConverter}}"/>
+                                                    <Span Text=", " IsVisible="{Binding ConservacionTotal}"/>
+                                                    <Span Text="{Binding Eliminacion, Converter={StaticResource BoolToTextConverter}, ConverterParameter='E'}" 
+                                                          TextColor="{Binding Eliminacion, Converter={StaticResource BoolToColorConverter}}"/>
+                                                    <Span Text=", " IsVisible="{Binding Eliminacion}"/>
+                                                    <Span Text="{Binding MediosTecnologicos, Converter={StaticResource BoolToTextConverter}, ConverterParameter='MT'}" 
+                                                          TextColor="{Binding MediosTecnologicos, Converter={StaticResource BoolToColorConverter}}"/>
+                                                    <Span Text=", " IsVisible="{Binding MediosTecnologicos}"/>
+                                                    <Span Text="{Binding Seleccion, Converter={StaticResource BoolToTextConverter}, ConverterParameter='S'}" 
+                                                          TextColor="{Binding Seleccion, Converter={StaticResource BoolToColorConverter}}"/>
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </Grid>
+
+                                    <Label Text="Procedimiento:" FontAttributes="Bold" Margin="0,10,0,5"/>
+                                    <Label Text="{Binding Procedimiento}" 
+                                           FontSize="14"
+                                           TextColor="#666666"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" 
+                                    VerticalOptions="Center"
+                                    Spacing="20">
+                    <Label Text="🔍"
+                           FontSize="48"
+                           HorizontalOptions="Center"/>
+                    <Label Text="No hay resultados"
+                           FontSize="18"
+                           TextColor="#666666"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>

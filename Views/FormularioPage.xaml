@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DocumentalManager.Views.FormularioPage"
+             xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             x:DataType="viewmodels:FormularioViewModel"
+             Title="{Binding TableName}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <!-- Campos comunes -->
+            <Label Text="Código:" FontSize="16" FontAttributes="Bold"/>
+            <Entry Text="{Binding Codigo}" 
+                   Placeholder="Ingrese código"
+                   BackgroundColor="#F5F5F5"
+                   HeightRequest="40"/>
+
+            <Label Text="Nombre:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+            <Entry Text="{Binding Nombre}" 
+                   Placeholder="Ingrese nombre"
+                   BackgroundColor="#F5F5F5"
+                   HeightRequest="40"/>
+
+            <!-- Selector de padre (excepto para Fondo) -->
+            <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource NotEqualConverter}, ConverterParameter='Fondos'}">
+                <Label Text="{Binding TableName, StringFormat='Seleccione {0} padre:'}" 
+                       FontSize="16" 
+                       FontAttributes="Bold" 
+                       Margin="0,10,0,0"/>
+
+                <Picker ItemsSource="{Binding ItemsPadre}"
+                        SelectedItem="{Binding SelectedItemPadre}"
+                        ItemDisplayBinding="{Binding Nombre}"
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="40"/>
+            </VerticalStackLayout>
+
+            <!-- Campos específicos de Subserie -->
+            <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource EqualConverter}, ConverterParameter='Subseries'}">
+
+                <Label Text="AG (Archivo de Gestión):" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Entry Text="{Binding AG}" 
+                       Keyboard="Numeric"
+                       BackgroundColor="#F5F5F5"
+                       HeightRequest="40"/>
+
+                <Label Text="AC (Archivo Central):" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Entry Text="{Binding AC}" 
+                       Keyboard="Numeric"
+                       BackgroundColor="#F5F5F5"
+                       HeightRequest="40"/>
+
+                <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding P}"/>
+                    <Label Grid.Column="0" Text="Papel" VerticalOptions="Center" Margin="30,0,0,0"/>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding EL}"/>
+                    <Label Grid.Column="1" Text="Electrónico" VerticalOptions="Center" Margin="30,0,0,0"/>
+                </Grid>
+
+                <Label Text="Formato Digital:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Picker ItemsSource="{Binding FormatosDisponibles}"
+                        SelectedItem="{Binding FormatoDigital}"
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="40"/>
+
+                <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding CT}"/>
+                    <Label Grid.Column="0" Text="Conservación Total" VerticalOptions="Center" Margin="30,0,0,0"/>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding E}"/>
+                    <Label Grid.Column="1" Text="Eliminación" VerticalOptions="Center" Margin="30,0,0,0"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding MT}"/>
+                    <Label Grid.Column="0" Text="Medios Tecnológicos" VerticalOptions="Center" Margin="30,0,0,0"/>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding S}"/>
+                    <Label Grid.Column="1" Text="Selección" VerticalOptions="Center" Margin="30,0,0,0"/>
+                </Grid>
+
+                <Label Text="Procedimiento:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Editor Text="{Binding Procedimiento}" 
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="100"/>
+
+            </VerticalStackLayout>
+
+            <!-- Observación (para todas excepto Subserie) -->
+            <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource NotEqualConverter}, ConverterParameter='Subseries'}">
+                <Label Text="Observación:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Editor Text="{Binding Observacion}" 
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="100"/>
+            </VerticalStackLayout>
+
+            <!-- Botones -->
+            <Grid ColumnDefinitions="*,*" Margin="0,20,0,0" Spacing="10">
+                <Button Grid.Column="0"
+                        Text="Guardar"
+                        Command="{Binding GuardarCommand}"
+                        BackgroundColor="#4CAF50"
+                        TextColor="White"
+                        HeightRequest="50"
+                        CornerRadius="8"/>
+
+                <Button Grid.Column="1"
+                        Text="Cancelar"
+                        Command="{Binding GoBackCommand}"
+                        BackgroundColor="#F44336"
+                        TextColor="White"
+                        HeightRequest="50"
+                        CornerRadius="8"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
