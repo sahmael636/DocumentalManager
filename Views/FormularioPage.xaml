@@ -97,7 +97,7 @@
             </VerticalStackLayout>
 
             <!-- Botones -->
-            <Grid ColumnDefinitions="*,*" Margin="0,20,0,0" Spacing="10">
+            <Grid ColumnDefinitions="*,*" Margin="0,20,0,0" >
                 <Button Grid.Column="0"
                         Text="Guardar"
                         Command="{Binding GuardarCommand}"

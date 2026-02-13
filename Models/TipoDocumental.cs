@@ -1,11 +1,7 @@
 ﻿namespace DocumentalManager.Models
 {
-    public class TipoDocumental
+    public class TipoDocumental : BaseEntity
     {
-        public int Id { get; set; }
-        public string Codigo { get; set; } = string.Empty;
-        public string Nombre { get; set; } = string.Empty;
         public int SubserieId { get; set; }
-        public string Observacion { get; set; } = string.Empty;
     }
 }

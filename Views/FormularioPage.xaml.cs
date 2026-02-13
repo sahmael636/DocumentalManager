@@ -2,6 +2,8 @@
 
 namespace DocumentalManager.Views;
 
+[QueryProperty(nameof(TableName), "tableName")]
+[QueryProperty(nameof(PageId), "id")]
 public partial class FormularioPage : ContentPage
 {
     public FormularioPage(FormularioViewModel viewModel)
@@ -10,32 +12,41 @@ public partial class FormularioPage : ContentPage
         BindingContext = viewModel;
     }
 
+    private string tableName;
+    public string TableName
+    {
+        get => tableName;
+        set
+        {
+            tableName = value;
+            if (BindingContext is FormularioViewModel vm && !string.IsNullOrEmpty(value))
+            {
+                vm.TableName = value;
+            }
+        }
+    }
+
+    // Cambiado de 'Id' a 'PageId' para evitar colisiones/reflection AmbiguousMatchException
+    private string pageId;
+    public string PageId
+    {
+        get => pageId;
+        set
+        {
+            pageId = value;
+            if (BindingContext is FormularioViewModel vm && int.TryParse(value, out var parsed))
+            {
+                vm.Id = parsed;
+            }
+        }
+    }
+
     protected override async void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
 
         if (BindingContext is FormularioViewModel vm)
         {
-            // Obtener parámetros
-            if (Shell.Current?.CurrentPage?.BindingContext is FormularioViewModel fvm)
-            {
-                var tableName = Shell.Current.CurrentPage?.BindingContext?.GetType()
-                    .GetProperty("TableName")?.GetValue(Shell.Current.CurrentPage.BindingContext)?.ToString();
-
-                var id = Shell.Current.CurrentPage?.BindingContext?.GetType()
-                    .GetProperty("Id")?.GetValue(Shell.Current.CurrentPage.BindingContext);
-
-                if (!string.IsNullOrEmpty(tableName))
-                {
-                    vm.TableName = tableName;
-                }
-
-                if (id != null)
-                {
-                    vm.Id = (int)id;
-                }
-            }
-
             await vm.LoadDataAsync();
         }
     }

@@ -1,12 +1,8 @@
-﻿using System.Collections.Generic;
-
+﻿
 namespace DocumentalManager.Models
 {
-    public class Subserie
+    public class Subserie : BaseEntity
     {
-        public int Id { get; set; }
-        public string Codigo { get; set; } = string.Empty;
-        public string Nombre { get; set; } = string.Empty;
         public int SerieId { get; set; }
         public int AG { get; set; } // Archivo de Gestión
         public int AC { get; set; } // Archivo Central
