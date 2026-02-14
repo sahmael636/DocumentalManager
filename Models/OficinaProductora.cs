@@ -2,6 +2,6 @@
 {
     public class OficinaProductora : BaseEntity
     {
-        public int UnidadAdministrativaId { get; set; }
+        public string UnidadAdministrativaId { get; set; } = string.Empty;
     }
 }

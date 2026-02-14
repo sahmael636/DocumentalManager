@@ -1,9 +1,8 @@
-﻿
-namespace DocumentalManager.Models
+﻿namespace DocumentalManager.Models
 {
     public class Subserie : BaseEntity
     {
-        public int SerieId { get; set; }
+        public string SerieId { get; set; } = string.Empty;
         public int AG { get; set; } // Archivo de Gestión
         public int AC { get; set; } // Archivo Central
         public bool P { get; set; } // Papel

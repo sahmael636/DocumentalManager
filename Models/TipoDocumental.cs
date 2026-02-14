@@ -2,6 +2,6 @@
 {
     public class TipoDocumental : BaseEntity
     {
-        public int SubserieId { get; set; }
+        public string SubserieId { get; set; } = string.Empty;
     }
 }

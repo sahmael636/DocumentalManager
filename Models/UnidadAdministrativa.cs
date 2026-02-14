@@ -2,6 +2,6 @@
 {
     public class UnidadAdministrativa : BaseEntity
     {
-        public int SubfondoId { get; set; }
+        public string SubfondoId { get; set; } = string.Empty;
     }
 }

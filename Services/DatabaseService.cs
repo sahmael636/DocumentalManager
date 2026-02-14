@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 
 namespace DocumentalManager.Services
 {
@@ -35,7 +36,7 @@ namespace DocumentalManager.Services
             return _database.Table<T>().ToListAsync();
         }
 
-        public Task<T> GetByIdAsync<T>(int id) where T : new()
+        public Task<T> GetByIdAsync<T>(string id) where T : new()
         {
             return _database.FindAsync<T>(id);
         }
@@ -55,7 +56,7 @@ namespace DocumentalManager.Services
             return _database.DeleteAsync(item);
         }
 
-        public async Task<bool> HasRelatedRecordsAsync(string tableName, int parentId)
+        public async Task<bool> HasRelatedRecordsAsync(string tableName, string parentId)
         {
             var result = false;
 
@@ -92,8 +93,9 @@ namespace DocumentalManager.Services
 
         /// <summary>
         /// Borra en cascada: primero borra todos los hijos (recursivo) y luego la entidad padre.
+        /// id ahora es string (GUID)
         /// </summary>
-        public async Task DeleteCascadeAsync(string tableName, int id)
+        public async Task DeleteCascadeAsync(string tableName, string id)
         {
             switch (tableName)
             {

@@ -2,6 +2,6 @@
 {
     public class Serie : BaseEntity
     {
-        public int OficinaProductoraId { get; set; }
+        public string OficinaProductoraId { get; set; } = string.Empty;
     }
 }

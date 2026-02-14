@@ -27,7 +27,8 @@ namespace DocumentalManager.Services
             string filePath,
             string[] requiredHeaders,
             Func<Dictionary<string, string>, T> crearEntidad,
-            Func<T, Task<bool>> validarExistenciaAsync) where T : new()
+            Func<T, Task<bool>> validarExistenciaAsync,
+            string sheetName = null) where T : new()
         {
             var importados = 0;
             var errores = new List<(int Fila, string Error)>();
@@ -37,10 +38,13 @@ namespace DocumentalManager.Services
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             using (var package = new ExcelPackage(stream))
             {
-                var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+                var worksheet = string.IsNullOrEmpty(sheetName)
+                    ? package.Workbook.Worksheets.FirstOrDefault()
+                    : package.Workbook.Worksheets.FirstOrDefault(ws => string.Equals(ws.Name, sheetName, StringComparison.OrdinalIgnoreCase));
+
                 if (worksheet == null)
                 {
-                    errores.Add((0, "El archivo no contiene hojas."));
+                    errores.Add((0, $"La hoja '{sheetName ?? "primera"}' no existe en el archivo."));
                     return (0, errores, entidades, filas);
                 }
 

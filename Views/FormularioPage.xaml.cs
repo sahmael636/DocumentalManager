@@ -34,9 +34,9 @@ public partial class FormularioPage : ContentPage
         set
         {
             pageId = value;
-            if (BindingContext is FormularioViewModel vm && int.TryParse(value, out var parsed))
+            if (BindingContext is FormularioViewModel vm)
             {
-                vm.Id = parsed;
+                vm.Id = value; // value ya es string, solo asignarlo directamente
             }
         }
     }

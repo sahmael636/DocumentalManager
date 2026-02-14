@@ -14,7 +14,7 @@ namespace DocumentalManager.ViewModels
         private string tableName;
 
         [ObservableProperty]
-        private int id;
+        private string id; // Cambiado de int a string
 
         [ObservableProperty]
         private string codigo;
@@ -80,7 +80,7 @@ namespace DocumentalManager.ViewModels
             {
                 await LoadParentItems();
 
-                if (Id > 0)
+                if (!string.IsNullOrEmpty(Id) && Id != "new") // Cambiado de Id > 0
                 {
                     await LoadExistingData();
                 }
@@ -224,7 +224,7 @@ namespace DocumentalManager.ViewModels
                     return;
                 }
 
-                if (Id == 0)
+                if (string.IsNullOrEmpty(Id) || Id == "new") // Cambiado de Id == 0
                     await InsertarNuevo();
                 else
                     await ActualizarExistente();
@@ -255,7 +255,7 @@ namespace DocumentalManager.ViewModels
                         Codigo = Codigo,
                         Nombre = Nombre,
                         Observacion = Observacion,
-                        FondoId = SelectedItemPadre != null ? ((Fondo)SelectedItemPadre).Id : 0
+                        FondoId = SelectedItemPadre != null ? ((Fondo)SelectedItemPadre).Id : string.Empty // Cambiado de 0 a string.Empty
                     });
                     break;
                 case "UnidadesAdministrativas":
@@ -264,7 +264,7 @@ namespace DocumentalManager.ViewModels
                         Codigo = Codigo,
                         Nombre = Nombre,
                         Observacion = Observacion,
-                        SubfondoId = SelectedItemPadre != null ? ((Subfondo)SelectedItemPadre).Id : 0
+                        SubfondoId = SelectedItemPadre != null ? ((Subfondo)SelectedItemPadre).Id : string.Empty // Cambiado de 0 a string.Empty
                     });
                     break;
                 case "OficinasProductoras":
@@ -273,7 +273,7 @@ namespace DocumentalManager.ViewModels
                         Codigo = Codigo,
                         Nombre = Nombre,
                         Observacion = Observacion,
-                        UnidadAdministrativaId = SelectedItemPadre != null ? ((UnidadAdministrativa)SelectedItemPadre).Id : 0
+                        UnidadAdministrativaId = SelectedItemPadre != null ? ((UnidadAdministrativa)SelectedItemPadre).Id : string.Empty // Cambiado de 0 a string.Empty
                     });
                     break;
                 case "Series":
@@ -282,7 +282,7 @@ namespace DocumentalManager.ViewModels
                         Codigo = Codigo,
                         Nombre = Nombre,
                         Observacion = Observacion,
-                        OficinaProductoraId = SelectedItemPadre != null ? ((OficinaProductora)SelectedItemPadre).Id : 0
+                        OficinaProductoraId = SelectedItemPadre != null ? ((OficinaProductora)SelectedItemPadre).Id : string.Empty // Cambiado de 0 a string.Empty
                     });
                     break;
                 case "Subseries":
@@ -290,7 +290,7 @@ namespace DocumentalManager.ViewModels
                     {
                         Codigo = Codigo,
                         Nombre = Nombre,
-                        SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : 0,
+                        SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : string.Empty, // Cambiado de 0 a string.Empty
                         AG = ag,
                         AC = ac,
                         P = P,
@@ -309,7 +309,7 @@ namespace DocumentalManager.ViewModels
                         Codigo = Codigo,
                         Nombre = Nombre,
                         Observacion = Observacion,
-                        SubserieId = SelectedItemPadre != null ? ((Subserie)SelectedItemPadre).Id : 0
+                        SubserieId = SelectedItemPadre != null ? ((Subserie)SelectedItemPadre).Id : string.Empty // Cambiado de 0 a string.Empty
                     });
                     break;
             }
@@ -336,7 +336,7 @@ namespace DocumentalManager.ViewModels
                         subfondo.Codigo = Codigo;
                         subfondo.Nombre = Nombre;
                         subfondo.Observacion = Observacion;
-                        subfondo.FondoId = SelectedItemPadre != null ? ((Fondo)SelectedItemPadre).Id : 0;
+                        subfondo.FondoId = SelectedItemPadre != null ? ((Fondo)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         await _databaseService.UpdateAsync(subfondo);
                     }
                     break;
@@ -347,7 +347,7 @@ namespace DocumentalManager.ViewModels
                         unidad.Codigo = Codigo;
                         unidad.Nombre = Nombre;
                         unidad.Observacion = Observacion;
-                        unidad.SubfondoId = SelectedItemPadre != null ? ((Subfondo)SelectedItemPadre).Id : 0;
+                        unidad.SubfondoId = SelectedItemPadre != null ? ((Subfondo)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         await _databaseService.UpdateAsync(unidad);
                     }
                     break;
@@ -358,7 +358,7 @@ namespace DocumentalManager.ViewModels
                         oficina.Codigo = Codigo;
                         oficina.Nombre = Nombre;
                         oficina.Observacion = Observacion;
-                        oficina.UnidadAdministrativaId = SelectedItemPadre != null ? ((UnidadAdministrativa)SelectedItemPadre).Id : 0;
+                        oficina.UnidadAdministrativaId = SelectedItemPadre != null ? ((UnidadAdministrativa)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         await _databaseService.UpdateAsync(oficina);
                     }
                     break;
@@ -369,7 +369,7 @@ namespace DocumentalManager.ViewModels
                         serie.Codigo = Codigo;
                         serie.Nombre = Nombre;
                         serie.Observacion = Observacion;
-                        serie.OficinaProductoraId = SelectedItemPadre != null ? ((OficinaProductora)SelectedItemPadre).Id : 0;
+                        serie.OficinaProductoraId = SelectedItemPadre != null ? ((OficinaProductora)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         await _databaseService.UpdateAsync(serie);
                     }
                     break;
@@ -379,7 +379,7 @@ namespace DocumentalManager.ViewModels
                     {
                         subserie.Codigo = Codigo;
                         subserie.Nombre = Nombre;
-                        subserie.SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : 0;
+                        subserie.SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         subserie.AG = ag;
                         subserie.AC = ac;
                         subserie.P = P;
@@ -400,7 +400,7 @@ namespace DocumentalManager.ViewModels
                         tipo.Codigo = Codigo;
                         tipo.Nombre = Nombre;
                         tipo.Observacion = Observacion;
-                        tipo.SubserieId = SelectedItemPadre != null ? ((Subserie)SelectedItemPadre).Id : 0;
+                        tipo.SubserieId = SelectedItemPadre != null ? ((Subserie)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         await _databaseService.UpdateAsync(tipo);
                     }
                     break;

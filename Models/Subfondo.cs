@@ -2,6 +2,6 @@
 {
     public class Subfondo : BaseEntity
     {
-        public int FondoId { get; set; }
+        public string FondoId { get; set; } = string.Empty;
     }
 }
