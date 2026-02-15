@@ -170,49 +170,141 @@ namespace DocumentalManager.Services
         public async Task<List<BusquedaResultado>> BuscarPorTexto(string texto)
         {
             var resultados = new List<BusquedaResultado>();
+            if (string.IsNullOrWhiteSpace(texto))
+                return resultados;
 
-            var tiposDocumentales = await _database.Table<TipoDocumental>()
-                .Where(t => t.Nombre.Contains(texto) || t.Codigo.Contains(texto))
-                .ToListAsync();
+            var q = texto.Trim();
 
-            foreach (var tipo in tiposDocumentales)
+            // 1) Buscar por TipoDocumental (resultado más específico)
+            var tipos = await _database.Table<TipoDocumental>().ToListAsync();
+            var tiposMatch = tipos.Where(t =>
+                (!string.IsNullOrEmpty(t.Nombre) && t.Nombre.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (!string.IsNullOrEmpty(t.Codigo) && t.Codigo.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0))
+                .ToList();
+
+            foreach (var tipo in tiposMatch)
             {
                 var subserie = await _database.FindAsync<Subserie>(tipo.SubserieId);
-                if (subserie != null)
+                var serie = subserie != null ? await _database.FindAsync<Serie>(subserie.SerieId) : null;
+                var oficina = serie != null ? await _database.FindAsync<OficinaProductora>(serie.OficinaProductoraId) : null;
+                var unidad = oficina != null ? await _database.FindAsync<UnidadAdministrativa>(oficina.UnidadAdministrativaId) : null;
+                var subfondo = unidad != null ? await _database.FindAsync<Subfondo>(unidad.SubfondoId) : null;
+                var fondo = subfondo != null ? await _database.FindAsync<Fondo>(subfondo.FondoId) : null;
+
+                var codigoCompleto = $"{fondo?.Codigo}.{subfondo?.Codigo}.{unidad?.Codigo}.{oficina?.Codigo}.{serie?.Codigo}.{subserie?.Codigo}.{tipo.Codigo}";
+
+                resultados.Add(new BusquedaResultado
                 {
-                    var serie = await _database.FindAsync<Serie>(subserie.SerieId);
-                    var oficina = serie != null ? await _database.FindAsync<OficinaProductora>(serie.OficinaProductoraId) : null;
-                    var unidad = oficina != null ? await _database.FindAsync<UnidadAdministrativa>(oficina.UnidadAdministrativaId) : null;
-                    var subfondo = unidad != null ? await _database.FindAsync<Subfondo>(unidad.SubfondoId) : null;
-                    var fondo = subfondo != null ? await _database.FindAsync<Fondo>(subfondo.FondoId) : null;
-
-                    var codigoCompleto = $"{fondo?.Codigo}.{subfondo?.Codigo}.{unidad?.Codigo}.{oficina?.Codigo}.{serie?.Codigo}.{subserie.Codigo}.{tipo.Codigo}";
-
-                    resultados.Add(new BusquedaResultado
-                    {
-                        Fondo = fondo?.Nombre ?? "",
-                        Subfondo = subfondo?.Nombre ?? "",
-                        UnidadAdministrativa = unidad?.Nombre ?? "",
-                        OficinaProductora = oficina?.Nombre ?? "",
-                        Serie = serie?.Nombre ?? "",
-                        Subserie = subserie.Nombre,
-                        TipoDocumental = tipo.Nombre,
-                        CodigoCompleto = codigoCompleto,
-                        AG = subserie.AG,
-                        AC = subserie.AC,
-                        Papel = subserie.P,
-                        Electronico = subserie.EL,
-                        FormatoDigital = subserie.FormatoDigital,
-                        ConservacionTotal = subserie.CT,
-                        Eliminacion = subserie.E,
-                        MediosTecnologicos = subserie.MT,
-                        Seleccion = subserie.S,
-                        Procedimiento = subserie.Procedimiento
-                    });
-                }
+                    Fondo = fondo?.Nombre ?? "",
+                    Subfondo = subfondo?.Nombre ?? "",
+                    UnidadAdministrativa = unidad?.Nombre ?? "",
+                    OficinaProductora = oficina?.Nombre ?? "",
+                    Serie = serie?.Nombre ?? "",
+                    Subserie = subserie?.Nombre ?? "",
+                    TipoDocumental = tipo.Nombre,
+                    CodigoCompleto = codigoCompleto,
+                    AG = subserie?.AG ?? 0,
+                    AC = subserie?.AC ?? 0,
+                    Papel = subserie?.P ?? false,
+                    Electronico = subserie?.EL ?? false,
+                    FormatoDigital = subserie?.FormatoDigital ?? "",
+                    ConservacionTotal = subserie?.CT ?? false,
+                    Eliminacion = subserie?.E ?? false,
+                    MediosTecnologicos = subserie?.MT ?? false,
+                    Seleccion = subserie?.S ?? false,
+                    Procedimiento = subserie?.Procedimiento ?? ""
+                });
             }
 
+            // 2) Buscar por Subserie (si no hay tipo, igual mostrar la subserie)
+            var subseries = await _database.Table<Subserie>().ToListAsync();
+            var subseriesMatch = subseries.Where(s =>
+                (!string.IsNullOrEmpty(s.Nombre) && s.Nombre.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (!string.IsNullOrEmpty(s.Codigo) && s.Codigo.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0))
+                .ToList();
+
+            foreach (var subserie in subseriesMatch)
+            {
+                // Evitar duplicados si ya añadimos resultados que contengan esta subserie (por tipos)
+                if (resultados.Any(r => r.Subserie == subserie.Nombre)) continue;
+
+                var serie = await _database.FindAsync<Serie>(subserie.SerieId);
+                var oficina = serie != null ? await _database.FindAsync<OficinaProductora>(serie.OficinaProductoraId) : null;
+                var unidad = oficina != null ? await _database.FindAsync<UnidadAdministrativa>(oficina.UnidadAdministrativaId) : null;
+                var subfondo = unidad != null ? await _database.FindAsync<Subfondo>(unidad.SubfondoId) : null;
+                var fondo = subfondo != null ? await _database.FindAsync<Fondo>(subfondo.FondoId) : null;
+
+                var codigoCompleto = $"{fondo?.Codigo}.{subfondo?.Codigo}.{unidad?.Codigo}.{oficina?.Codigo}.{serie?.Codigo}.{subserie.Codigo}";
+
+                resultados.Add(new BusquedaResultado
+                {
+                    Fondo = fondo?.Nombre ?? "",
+                    Subfondo = subfondo?.Nombre ?? "",
+                    UnidadAdministrativa = unidad?.Nombre ?? "",
+                    OficinaProductora = oficina?.Nombre ?? "",
+                    Serie = serie?.Nombre ?? "",
+                    Subserie = subserie.Nombre,
+                    TipoDocumental = "", // no hay tipo asociado en esta coincidencia
+                    CodigoCompleto = codigoCompleto,
+                    AG = subserie.AG,
+                    AC = subserie.AC,
+                    Papel = subserie.P,
+                    Electronico = subserie.EL,
+                    FormatoDigital = subserie.FormatoDigital,
+                    ConservacionTotal = subserie.CT,
+                    Eliminacion = subserie.E,
+                    MediosTecnologicos = subserie.MT,
+                    Seleccion = subserie.S,
+                    Procedimiento = subserie.Procedimiento
+                });
+            }
+
+            // 3) (Opcional) Buscar en Serie / Oficina / Unidad / Subfondo / Fondo y agregar entradas representativas
+            // Por brevedad añadimos búsqueda en Serie (puedes replicar el patrón para niveles superiores)
+            var series = await _database.Table<Serie>().ToListAsync();
+            var seriesMatch = series.Where(s =>
+                (!string.IsNullOrEmpty(s.Nombre) && s.Nombre.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (!string.IsNullOrEmpty(s.Codigo) && s.Codigo.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0))
+                .ToList();
+
+            foreach (var serie in seriesMatch)
+            {
+                if (resultados.Any(r => r.Serie == serie.Nombre)) continue;
+
+                var oficina = await _database.FindAsync<OficinaProductora>(serie.OficinaProductoraId);
+                var unidad = oficina != null ? await _database.FindAsync<UnidadAdministrativa>(oficina.UnidadAdministrativaId) : null;
+                var subfondo = unidad != null ? await _database.FindAsync<Subfondo>(unidad.SubfondoId) : null;
+                var fondo = subfondo != null ? await _database.FindAsync<Fondo>(subfondo.FondoId) : null;
+
+                var codigoCompleto = $"{fondo?.Codigo}.{subfondo?.Codigo}.{unidad?.Codigo}.{oficina?.Codigo}.{serie.Codigo}";
+
+                resultados.Add(new BusquedaResultado
+                {
+                    Fondo = fondo?.Nombre ?? "",
+                    Subfondo = subfondo?.Nombre ?? "",
+                    UnidadAdministrativa = unidad?.Nombre ?? "",
+                    OficinaProductora = oficina?.Nombre ?? "",
+                    Serie = serie.Nombre,
+                    Subserie = "",
+                    TipoDocumental = "",
+                    CodigoCompleto = codigoCompleto
+                });
+            }
+
+            // Puedes extender el patrón (Oficina, Unidad, Subfondo, Fondo) si lo deseas.
+
             return resultados;
+        }
+
+        // Método adicional
+        public async Task<bool> ExistsByCodigoAsync<T>(string codigo) where T : BaseEntity, new()
+        {
+            if (string.IsNullOrWhiteSpace(codigo))
+                return false;
+
+            var codigoNormalized = codigo.Trim();
+            var count = await _database.Table<T>().Where(x => x.Codigo == codigoNormalized).CountAsync();
+            return count > 0;
         }
     }
 }

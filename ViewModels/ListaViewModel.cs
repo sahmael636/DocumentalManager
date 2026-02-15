@@ -220,8 +220,7 @@ namespace DocumentalManager.ViewModels
                                 Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
                                 Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty
                             };
-                            Func<Fondo, Task<bool>> existeAsync = async f =>
-                                (await _databaseService.GetAllAsync<Fondo>()).Any(x => x.Codigo == f.Codigo);
+                            Func<Fondo, Task<bool>> existeAsync = async f => await _databaseService.ExistsByCodigoAsync<Fondo>(f.Codigo?.Trim());
 
                             var res = await _excelService.ImportarDesdeExcel<Fondo>(filePath, headers, crear, existeAsync);
 
@@ -265,8 +264,7 @@ namespace DocumentalManager.ViewModels
                                 Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
                                 FondoId = string.Empty // Inicializamos como string vacío, se asignará después
                             };
-                            Func<Subfondo, Task<bool>> existeAsync = async s =>
-                                (await _databaseService.GetAllAsync<Subfondo>()).Any(x => x.Codigo == s.Codigo);
+                            Func<Subfondo, Task<bool>> existeAsync = async s => await _databaseService.ExistsByCodigoAsync<Subfondo>(s.Codigo?.Trim());
 
                             var res = await _excelService.ImportarDesdeExcel<Subfondo>(filePath, headers, crear, existeAsync);
 

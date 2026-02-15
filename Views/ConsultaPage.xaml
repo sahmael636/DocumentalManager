@@ -6,6 +6,13 @@
              x:DataType="viewmodels:ConsultaViewModel"
              Title="{Binding Title}">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Atrás"
+                     Order="Primary"
+                     Priority="0"
+                     Command="{Binding VolverCommand}" />
+    </ContentPage.ToolbarItems>
+
     <Grid RowDefinitions="Auto, Auto, *" Padding="10">
 
         <!-- Buscador -->
@@ -120,45 +127,19 @@
                                         <Label Grid.Column="1" Text="{Binding AC}" Margin="5,0,0,0"/>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,*">
+                                    <Grid ColumnDefinitions="Auto,*">
                                         <Label Grid.Column="0" Text="Soporte:" FontAttributes="Bold"/>
-                                        <Label Grid.Column="1">
-                                            <Label.FormattedText>
-                                                <FormattedString>
-                                                    <Span Text="{Binding Papel, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Papel'}" 
-                                                          TextColor="{Binding Papel, Converter={StaticResource BoolToColorConverter}}"/>
-                                                    <Span Text=", " IsVisible="{Binding Papel}"/>
-                                                    <Span Text="{Binding Electronico, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Electrónico'}" 
-                                                          TextColor="{Binding Electronico, Converter={StaticResource BoolToColorConverter}}"/>
-                                                </FormattedString>
-                                            </Label.FormattedText>
-                                        </Label>
+                                        <Label Grid.Column="1" Text="{Binding Soporte}" Margin="5,0,0,0" TextColor="#2b0b98"/>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,*" IsVisible="{Binding !string.IsNullOrEmpty(FormatoDigital)}">
+                                    <Grid ColumnDefinitions="*,*" IsVisible="{Binding FormatoDigital, Converter={StaticResource IsNotNullOrEmptyConverter}}">
                                         <Label Grid.Column="0" Text="Formato:" FontAttributes="Bold"/>
                                         <Label Grid.Column="1" Text="{Binding FormatoDigital}" Margin="5,0,0,0"/>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,*">
+                                    <Grid ColumnDefinitions="Auto,*">
                                         <Label Grid.Column="0" Text="Disposición:" FontAttributes="Bold"/>
-                                        <Label Grid.Column="1">
-                                            <Label.FormattedText>
-                                                <FormattedString>
-                                                    <Span Text="{Binding ConservacionTotal, Converter={StaticResource BoolToTextConverter}, ConverterParameter='CT'}" 
-                                                          TextColor="{Binding ConservacionTotal, Converter={StaticResource BoolToColorConverter}}"/>
-                                                    <Span Text=", " IsVisible="{Binding ConservacionTotal}"/>
-                                                    <Span Text="{Binding Eliminacion, Converter={StaticResource BoolToTextConverter}, ConverterParameter='E'}" 
-                                                          TextColor="{Binding Eliminacion, Converter={StaticResource BoolToColorConverter}}"/>
-                                                    <Span Text=", " IsVisible="{Binding Eliminacion}"/>
-                                                    <Span Text="{Binding MediosTecnologicos, Converter={StaticResource BoolToTextConverter}, ConverterParameter='MT'}" 
-                                                          TextColor="{Binding MediosTecnologicos, Converter={StaticResource BoolToColorConverter}}"/>
-                                                    <Span Text=", " IsVisible="{Binding MediosTecnologicos}"/>
-                                                    <Span Text="{Binding Seleccion, Converter={StaticResource BoolToTextConverter}, ConverterParameter='S'}" 
-                                                          TextColor="{Binding Seleccion, Converter={StaticResource BoolToColorConverter}}"/>
-                                                </FormattedString>
-                                            </Label.FormattedText>
-                                        </Label>
+                                        <Label Grid.Column="1" Text="{Binding Disposicion}" Margin="5,0,0,0"/>
                                     </Grid>
 
                                     <Label Text="Procedimiento:" FontAttributes="Bold" Margin="0,10,0,5"/>

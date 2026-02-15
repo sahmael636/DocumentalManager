@@ -57,5 +57,19 @@ namespace DocumentalManager.ViewModels
                 IsBusy = false;
             }
         }
+
+        // Comando para el Toolbar "Atrás"
+        [RelayCommand]
+        private async Task Volver()
+        {
+            try
+            {
+                await Shell.Current.GoToAsync("..");
+            }
+            catch
+            {
+                // Silenciar por ahora; opcional: mostrar aviso
+            }
+        }
     }
 }

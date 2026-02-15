@@ -22,5 +22,31 @@
         public bool MediosTecnologicos { get; set; }
         public bool Seleccion { get; set; }
         public string Procedimiento { get; set; } = string.Empty;
+
+        // Propiedad calculada para mostrar los soportes (Papel / Electrónico)
+        public string Soporte
+        {
+            get
+            {
+                var parts = new List<string>();
+                if (Papel) parts.Add("Papel");
+                if (Electronico) parts.Add("Electrónico");
+                return parts.Count > 0 ? string.Join(", ", parts) : string.Empty;
+            }
+        }
+
+        // Propiedad calculada para mostrar la disposición abreviada (CT, E, MT, S)
+        public string Disposicion
+        {
+            get
+            {
+                var parts = new List<string>();
+                if (ConservacionTotal) parts.Add("CT");
+                if (Eliminacion) parts.Add("E");
+                if (MediosTecnologicos) parts.Add("MT");
+                if (Seleccion) parts.Add("S");
+                return parts.Count > 0 ? string.Join(", ", parts) : string.Empty;
+            }
+        }
     }
 }
