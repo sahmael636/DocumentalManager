@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DocumentalManager.Views.ConsultaPage"
              xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             xmlns:models="clr-namespace:DocumentalManager.Models"
              x:DataType="viewmodels:ConsultaViewModel"
              Title="{Binding Title}">
 
@@ -57,7 +58,7 @@
                         IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
 
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="models:BusquedaResultado">
                     <Border Padding="15"
                             Margin="0,0,0,10"
                             StrokeThickness="1"
