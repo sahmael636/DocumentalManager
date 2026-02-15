@@ -9,6 +9,8 @@ namespace DocumentalManager
 
             Routing.RegisterRoute("ListaPage", typeof(ListaPage));
             Routing.RegisterRoute("FormularioPage", typeof(FormularioPage));
+            Routing.RegisterRoute(nameof(TablasPage), typeof(TablasPage));
+            Routing.RegisterRoute(nameof(ConsultaPage), typeof(ConsultaPage));
         }
     }
 }

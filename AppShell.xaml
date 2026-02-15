@@ -10,7 +10,7 @@
     <ShellContent Title="Inicio"
                   Route="MainPage"
                   ContentTemplate="{DataTemplate views:MainPage}" />
-
+    <!--
     <ShellContent Title="Tablas"
                   Route="TablasPage"
                   ContentTemplate="{DataTemplate views:TablasPage}" />
@@ -18,5 +18,6 @@
     <ShellContent Title="Consulta"
                   Route="ConsultaPage"
                   ContentTemplate="{DataTemplate views:ConsultaPage}" />
+    -->
 
 </Shell>

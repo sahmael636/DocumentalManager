@@ -131,7 +131,9 @@ namespace DocumentalManager.ViewModels
             var id = item.GetType().GetProperty("Id")?.GetValue(item)?.ToString() ?? string.Empty;
 
             // Verificar si tiene registros relacionados (firma espera string)
-            var hasRelated = await _databaseService.HasRelatedRecordsAsync(TableName.TrimEnd('s'), id);
+            var entityName = EntityNameMap[TableName];
+            //var hasRelated = await _databaseService.HasRelatedRecordsAsync(TableName.TrimEnd('s'), id);
+            var hasRelated = await _databaseService.HasRelatedRecordsAsync(entityName, id);
 
             if (hasRelated)
             {
@@ -142,7 +144,9 @@ namespace DocumentalManager.ViewModels
                 if (!confirmCascade) return;
 
                 // Borrar en cascada (firma espera string)
-                await _databaseService.DeleteCascadeAsync(TableName.TrimEnd('s'), id);
+                //await _databaseService.DeleteCascadeAsync(TableName.TrimEnd('s'), id);
+                entityName = EntityNameMap[TableName];
+                await _databaseService.DeleteCascadeAsync(entityName, id);
                 await LoadDataAsync();
                 return;
             }
@@ -159,6 +163,17 @@ namespace DocumentalManager.ViewModels
                 await LoadDataAsync();
             }
         }
+
+        private static readonly Dictionary<string, string> EntityNameMap = new()
+        {
+            ["Fondos"] = "Fondo",
+            ["Subfondos"] = "Subfondo",
+            ["UnidadesAdministrativas"] = "UnidadAdministrativa",
+            ["OficinasProductoras"] = "OficinaProductora",
+            ["Series"] = "Serie",
+            ["Subseries"] = "Subserie",
+            ["TiposDocumentales"] = "TipoDocumental",
+        };
 
         private async Task DeleteItem(object item)
         {
@@ -197,10 +212,10 @@ namespace DocumentalManager.ViewModels
                 {
                     PickerTitle = "Seleccione archivo Excel",
                     FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                    {
-                        { DevicePlatform.WinUI, new[] { ".xlsx", ".xls" } },
-                        { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel" } }
-                    })
+            {
+                { DevicePlatform.WinUI, new[] { ".xlsx", ".xls" } },
+                { DevicePlatform.Android, new[] { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel" } }
+            })
                 };
 
                 var result = await FilePicker.Default.PickAsync(options);
@@ -208,21 +223,58 @@ namespace DocumentalManager.ViewModels
 
                 var filePath = result.FullPath;
 
+                // Helpers locales: cambios mínimos, sin tocar servicios
+                string GetVal(Dictionary<string, string> d, string k)
+                    => (d.GetValueOrDefault(k) ?? string.Empty).Trim();
+
+                string GetIdOrNew(Dictionary<string, string> d, string k)
+                {
+                    var v = GetVal(d, k);
+                    return string.IsNullOrWhiteSpace(v) ? Guid.NewGuid().ToString() : v;
+                }
+
+                bool ParseBool(Dictionary<string, string> d, string k)
+                {
+                    var v = GetVal(d, k);
+                    return bool.TryParse(v, out var b) && b;
+                }
+
+                int ParseInt(Dictionary<string, string> d, string k)
+                {
+                    var v = GetVal(d, k);
+                    return int.TryParse(v, out var n) ? n : 0;
+                }
+
+                async Task<bool> ExistsByIdAsync<T>(string id) where T : class, new()
+                {
+                    if (string.IsNullOrWhiteSpace(id)) return false;
+                    var existing = await _databaseService.GetByIdAsync<T>(id);
+                    return existing != null;
+                }
+
+                // ✅ IMPORTANTE: leer SIEMPRE la hoja que coincide con la tabla actual
+                var sheetName = TableName;
+
                 switch (TableName)
                 {
                     case "Fondos":
                         {
-                            var headers = new[] { "Codigo", "Nombre", "Observacion" };
+                            var headers = new[] { "Id", "Codigo", "Nombre", "Observacion" };
+
                             Func<Dictionary<string, string>, Fondo> crear = dict => new Fondo
                             {
-                                // No asignamos Id porque se genera automáticamente en el constructor de BaseEntity
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion")
                             };
-                            Func<Fondo, Task<bool>> existeAsync = async f => await _databaseService.ExistsByCodigoAsync<Fondo>(f.Codigo?.Trim());
 
-                            var res = await _excelService.ImportarDesdeExcel<Fondo>(filePath, headers, crear, existeAsync);
+                            Func<Fondo, Task<bool>> existeAsync =
+                                //async f => await _databaseService.ExistsByCodigoAsync<Fondo>(f.Codigo?.Trim());
+                                async f => await ExistsByIdAsync<Fondo>(f.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<Fondo>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var insertados = 0;
                             for (int i = 0; i < res.Entidades.Count; i++)
@@ -236,6 +288,7 @@ namespace DocumentalManager.ViewModels
                                 catch (Exception ex)
                                 {
                                     res.Errores.Add((i + 2, $"Insert error: {ex.Message}"));
+                                    await Application.Current.MainPage.DisplayAlert("Error al insertar", $"Fila {i + 2}: {ex.Message}", "OK");
                                 }
                             }
 
@@ -247,7 +300,6 @@ namespace DocumentalManager.ViewModels
 
                     case "Subfondos":
                         {
-                            // Validar que existan Fondos primero
                             var fondosExist = (await _databaseService.GetAllAsync<Fondo>()).Any();
                             if (!fondosExist)
                             {
@@ -256,33 +308,38 @@ namespace DocumentalManager.ViewModels
                                 return;
                             }
 
-                            var headers = new[] { "Codigo", "Nombre", "Observacion", "FondoCodigo" };
+                            var headers = new[] { "Id", "Codigo", "Nombre", "Observacion", "FondoId" };
+
                             Func<Dictionary<string, string>, Subfondo> crear = dict => new Subfondo
                             {
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
-                                FondoId = string.Empty // Inicializamos como string vacío, se asignará después
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion"),
+                                FondoId = GetVal(dict, "FondoId")
                             };
-                            Func<Subfondo, Task<bool>> existeAsync = async s => await _databaseService.ExistsByCodigoAsync<Subfondo>(s.Codigo?.Trim());
 
-                            var res = await _excelService.ImportarDesdeExcel<Subfondo>(filePath, headers, crear, existeAsync);
+                            Func<Subfondo, Task<bool>> existeAsync =
+                                //async s => await _databaseService.ExistsByCodigoAsync<Subfondo>(s.Codigo?.Trim());
+                                async s => await ExistsByIdAsync<Subfondo>(s.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<Subfondo>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var fondos = await _databaseService.GetAllAsync<Fondo>();
                             var insertados = 0;
+
                             for (int i = 0; i < res.Entidades.Count; i++)
                             {
                                 var ent = res.Entidades[i];
                                 var fila = res.Filas[i];
-                                var fondoCodigo = fila.GetValueOrDefault("FondoCodigo")?.Trim();
-                                var parent = fondos.FirstOrDefault(f => string.Equals(f.Codigo, fondoCodigo, StringComparison.OrdinalIgnoreCase));
-                                if (parent == null)
+
+                                var fondoId = GetVal(fila, "FondoId");
+                                if (!fondos.Any(f => f.Id == fondoId))
                                 {
-                                    res.Errores.Add((i + 2, $"No se encontró Fondo para FondoCodigo='{fondoCodigo}'"));
+                                    res.Errores.Add((i + 2, $"No se encontró Fondo para FondoId='{fondoId}'"));
                                     continue;
                                 }
-
-                                ent.FondoId = parent.Id; // Ahora asignamos string a string
 
                                 try
                                 {
@@ -292,6 +349,7 @@ namespace DocumentalManager.ViewModels
                                 catch (Exception ex)
                                 {
                                     res.Errores.Add((i + 2, $"Insert error: {ex.Message}"));
+                                    await Application.Current.MainPage.DisplayAlert("Error al insertar", $"Fila {i + 2}: {ex.Message}", "OK");
                                 }
                             }
 
@@ -311,34 +369,38 @@ namespace DocumentalManager.ViewModels
                                 return;
                             }
 
-                            var headers = new[] { "Codigo", "Nombre", "Observacion", "SubfondoCodigo" };
+                            var headers = new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" };
+
                             Func<Dictionary<string, string>, UnidadAdministrativa> crear = dict => new UnidadAdministrativa
                             {
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
-                                SubfondoId = string.Empty
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion"),
+                                SubfondoId = GetVal(dict, "SubfondoId")
                             };
-                            Func<UnidadAdministrativa, Task<bool>> existeAsync = async s =>
-                                (await _databaseService.GetAllAsync<UnidadAdministrativa>()).Any(x => x.Codigo == s.Codigo);
 
-                            var res = await _excelService.ImportarDesdeExcel<UnidadAdministrativa>(filePath, headers, crear, existeAsync);
+                            Func<UnidadAdministrativa, Task<bool>> existeAsync =
+                                //async u => (await _databaseService.GetAllAsync<UnidadAdministrativa>()).Any(x => x.Codigo == u.Codigo);
+                                async u => await ExistsByIdAsync<UnidadAdministrativa>(u.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<UnidadAdministrativa>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var subfondos = await _databaseService.GetAllAsync<Subfondo>();
                             var insertados = 0;
+
                             for (int i = 0; i < res.Entidades.Count; i++)
                             {
                                 var ent = res.Entidades[i];
                                 var fila = res.Filas[i];
-                                var parentCodigo = fila.GetValueOrDefault("SubfondoCodigo")?.Trim();
-                                var parent = subfondos.FirstOrDefault(s => string.Equals(s.Codigo, parentCodigo, StringComparison.OrdinalIgnoreCase));
-                                if (parent == null)
+
+                                var subfondoId = GetVal(fila, "SubfondoId");
+                                if (!subfondos.Any(s => s.Id == subfondoId))
                                 {
-                                    res.Errores.Add((i + 2, $"No se encontró Subfondo para SubfondoCodigo='{parentCodigo}'"));
+                                    res.Errores.Add((i + 2, $"No se encontró Subfondo para SubfondoId='{subfondoId}'"));
                                     continue;
                                 }
-
-                                ent.SubfondoId = parent.Id;
 
                                 try
                                 {
@@ -367,34 +429,38 @@ namespace DocumentalManager.ViewModels
                                 return;
                             }
 
-                            var headers = new[] { "Codigo", "Nombre", "Observacion", "UnidadCodigo" };
+                            var headers = new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" };
+
                             Func<Dictionary<string, string>, OficinaProductora> crear = dict => new OficinaProductora
                             {
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
-                                UnidadAdministrativaId = string.Empty
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion"),
+                                UnidadAdministrativaId = GetVal(dict, "UnidadAdministrativaId")
                             };
-                            Func<OficinaProductora, Task<bool>> existeAsync = async s =>
-                                (await _databaseService.GetAllAsync<OficinaProductora>()).Any(x => x.Codigo == s.Codigo);
 
-                            var res = await _excelService.ImportarDesdeExcel<OficinaProductora>(filePath, headers, crear, existeAsync);
+                            Func<OficinaProductora, Task<bool>> existeAsync =
+                                //async o => (await _databaseService.GetAllAsync<OficinaProductora>()).Any(x => x.Codigo == o.Codigo);
+                                async o => await ExistsByIdAsync<OficinaProductora>(o.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<OficinaProductora>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var unidades = await _databaseService.GetAllAsync<UnidadAdministrativa>();
                             var insertados = 0;
+
                             for (int i = 0; i < res.Entidades.Count; i++)
                             {
                                 var ent = res.Entidades[i];
                                 var fila = res.Filas[i];
-                                var parentCodigo = fila.GetValueOrDefault("UnidadCodigo")?.Trim();
-                                var parent = unidades.FirstOrDefault(u => string.Equals(u.Codigo, parentCodigo, StringComparison.OrdinalIgnoreCase));
-                                if (parent == null)
+
+                                var unidadId = GetVal(fila, "UnidadAdministrativaId");
+                                if (!unidades.Any(u => u.Id == unidadId))
                                 {
-                                    res.Errores.Add((i + 2, $"No se encontró Unidad para UnidadCodigo='{parentCodigo}'"));
+                                    res.Errores.Add((i + 2, $"No se encontró UnidadAdministrativa para UnidadAdministrativaId='{unidadId}'"));
                                     continue;
                                 }
-
-                                ent.UnidadAdministrativaId = parent.Id;
 
                                 try
                                 {
@@ -423,34 +489,38 @@ namespace DocumentalManager.ViewModels
                                 return;
                             }
 
-                            var headers = new[] { "Codigo", "Nombre", "Observacion", "OficinaCodigo" };
+                            var headers = new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" };
+
                             Func<Dictionary<string, string>, Serie> crear = dict => new Serie
                             {
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
-                                OficinaProductoraId = string.Empty
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion"),
+                                OficinaProductoraId = GetVal(dict, "OficinaProductoraId")
                             };
-                            Func<Serie, Task<bool>> existeAsync = async s =>
-                                (await _databaseService.GetAllAsync<Serie>()).Any(x => x.Codigo == s.Codigo);
 
-                            var res = await _excelService.ImportarDesdeExcel<Serie>(filePath, headers, crear, existeAsync);
+                            Func<Serie, Task<bool>> existeAsync =
+                                //async s => (await _databaseService.GetAllAsync<Serie>()).Any(x => x.Codigo == s.Codigo);
+                                async s => await ExistsByIdAsync<Serie>(s.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<Serie>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var oficinas = await _databaseService.GetAllAsync<OficinaProductora>();
                             var insertados = 0;
+
                             for (int i = 0; i < res.Entidades.Count; i++)
                             {
                                 var ent = res.Entidades[i];
                                 var fila = res.Filas[i];
-                                var parentCodigo = fila.GetValueOrDefault("OficinaCodigo")?.Trim();
-                                var parent = oficinas.FirstOrDefault(o => string.Equals(o.Codigo, parentCodigo, StringComparison.OrdinalIgnoreCase));
-                                if (parent == null)
+
+                                var oficinaId = GetVal(fila, "OficinaProductoraId");
+                                if (!oficinas.Any(o => o.Id == oficinaId))
                                 {
-                                    res.Errores.Add((i + 2, $"No se encontró Oficina para OficinaCodigo='{parentCodigo}'"));
+                                    res.Errores.Add((i + 2, $"No se encontró OficinaProductora para OficinaProductoraId='{oficinaId}'"));
                                     continue;
                                 }
-
-                                ent.OficinaProductoraId = parent.Id;
 
                                 try
                                 {
@@ -479,44 +549,53 @@ namespace DocumentalManager.ViewModels
                                 return;
                             }
 
-                            var headers = new[] { "Codigo", "Nombre", "Observacion", "SerieCodigo", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" };
+                            var headers = new[]
+                            {
+                    "Id", "Codigo", "Nombre", "Observacion", "SerieId",
+                    "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento"
+                };
+
                             Func<Dictionary<string, string>, Subserie> crear = dict => new Subserie
                             {
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
-                                SerieId = string.Empty,
-                                AG = int.TryParse(dict.GetValueOrDefault("AG"), out var ag) ? ag : 0,
-                                AC = int.TryParse(dict.GetValueOrDefault("AC"), out var ac) ? ac : 0,
-                                P = bool.TryParse(dict.GetValueOrDefault("P"), out var p) && p,
-                                EL = bool.TryParse(dict.GetValueOrDefault("EL"), out var el) && el,
-                                FormatoDigital = dict.GetValueOrDefault("FormatoDigital")?.Trim() ?? string.Empty,
-                                CT = bool.TryParse(dict.GetValueOrDefault("CT"), out var ct) && ct,
-                                E = bool.TryParse(dict.GetValueOrDefault("E"), out var e) && e,
-                                MT = bool.TryParse(dict.GetValueOrDefault("MT"), out var mt) && mt,
-                                S = bool.TryParse(dict.GetValueOrDefault("S"), out var s) && s,
-                                Procedimiento = dict.GetValueOrDefault("Procedimiento")?.Trim() ?? string.Empty,
-                            };
-                            Func<Subserie, Task<bool>> existeAsync = async s =>
-                                (await _databaseService.GetAllAsync<Subserie>()).Any(x => x.Codigo == s.Codigo);
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion"),
+                                SerieId = GetVal(dict, "SerieId"),
 
-                            var res = await _excelService.ImportarDesdeExcel<Subserie>(filePath, headers, crear, existeAsync);
+                                AG = ParseInt(dict, "AG"),
+                                AC = ParseInt(dict, "AC"),
+                                P = ParseBool(dict, "P"),
+                                EL = ParseBool(dict, "EL"),
+                                FormatoDigital = GetVal(dict, "FormatoDigital"),
+                                CT = ParseBool(dict, "CT"),
+                                E = ParseBool(dict, "E"),
+                                MT = ParseBool(dict, "MT"),
+                                S = ParseBool(dict, "S"),
+                                Procedimiento = GetVal(dict, "Procedimiento")
+                            };
+
+                            Func<Subserie, Task<bool>> existeAsync =
+                                //async ss => (await _databaseService.GetAllAsync<Subserie>()).Any(x => x.Codigo == ss.Codigo);
+                                async ss => await ExistsByIdAsync<Subserie>(ss.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<Subserie>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var series = await _databaseService.GetAllAsync<Serie>();
                             var insertados = 0;
+
                             for (int i = 0; i < res.Entidades.Count; i++)
                             {
                                 var ent = res.Entidades[i];
                                 var fila = res.Filas[i];
-                                var parentCodigo = fila.GetValueOrDefault("SerieCodigo")?.Trim();
-                                var parent = series.FirstOrDefault(s => string.Equals(s.Codigo, parentCodigo, StringComparison.OrdinalIgnoreCase));
-                                if (parent == null)
+
+                                var serieId = GetVal(fila, "SerieId");
+                                if (!series.Any(s => s.Id == serieId))
                                 {
-                                    res.Errores.Add((i + 2, $"No se encontró Serie para SerieCodigo='{parentCodigo}'"));
+                                    res.Errores.Add((i + 2, $"No se encontró Serie para SerieId='{serieId}'"));
                                     continue;
                                 }
-
-                                ent.SerieId = parent.Id;
 
                                 try
                                 {
@@ -545,34 +624,38 @@ namespace DocumentalManager.ViewModels
                                 return;
                             }
 
-                            var headers = new[] { "Codigo", "Nombre", "Observacion", "SubserieCodigo" };
+                            var headers = new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" };
+
                             Func<Dictionary<string, string>, TipoDocumental> crear = dict => new TipoDocumental
                             {
-                                Codigo = dict.GetValueOrDefault("Codigo")?.Trim() ?? string.Empty,
-                                Nombre = dict.GetValueOrDefault("Nombre")?.Trim() ?? string.Empty,
-                                Observacion = dict.GetValueOrDefault("Observacion")?.Trim() ?? string.Empty,
-                                SubserieId = string.Empty
+                                Id = GetIdOrNew(dict, "Id"),
+                                Codigo = GetVal(dict, "Codigo"),
+                                Nombre = GetVal(dict, "Nombre"),
+                                Observacion = GetVal(dict, "Observacion"),
+                                SubserieId = GetVal(dict, "SubserieId")
                             };
-                            Func<TipoDocumental, Task<bool>> existeAsync = async s =>
-                                (await _databaseService.GetAllAsync<TipoDocumental>()).Any(x => x.Codigo == s.Codigo);
 
-                            var res = await _excelService.ImportarDesdeExcel<TipoDocumental>(filePath, headers, crear, existeAsync);
+                            Func<TipoDocumental, Task<bool>> existeAsync =
+                                //async t => (await _databaseService.GetAllAsync<TipoDocumental>()).Any(x => x.Codigo == t.Codigo);
+                                async t => await ExistsByIdAsync<TipoDocumental>(t.Id);
+
+                            var res = await _excelService.ImportarDesdeExcel<TipoDocumental>(
+                                filePath, headers, crear, existeAsync, sheetName);
 
                             var subseries = await _databaseService.GetAllAsync<Subserie>();
                             var insertados = 0;
+
                             for (int i = 0; i < res.Entidades.Count; i++)
                             {
                                 var ent = res.Entidades[i];
                                 var fila = res.Filas[i];
-                                var parentCodigo = fila.GetValueOrDefault("SubserieCodigo")?.Trim();
-                                var parent = subseries.FirstOrDefault(s => string.Equals(s.Codigo, parentCodigo, StringComparison.OrdinalIgnoreCase));
-                                if (parent == null)
+
+                                var subserieId = GetVal(fila, "SubserieId");
+                                if (!subseries.Any(s => s.Id == subserieId))
                                 {
-                                    res.Errores.Add((i + 2, $"No se encontró Subserie para SubserieCodigo='{parentCodigo}'"));
+                                    res.Errores.Add((i + 2, $"No se encontró Subserie para SubserieId='{subserieId}'"));
                                     continue;
                                 }
-
-                                ent.SubserieId = parent.Id;
 
                                 try
                                 {

@@ -305,6 +305,6 @@ namespace DocumentalManager.Services
             var codigoNormalized = codigo.Trim();
             var count = await _database.Table<T>().Where(x => x.Codigo == codigoNormalized).CountAsync();
             return count > 0;
-        }
+        } 
     }
 }
