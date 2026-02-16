@@ -187,14 +187,14 @@ namespace DocumentalManager.ViewModels
                     {
                         Codigo = subserie.Codigo;
                         Nombre = subserie.Nombre;
-                        ag = subserie.AG;
-                        ac = subserie.AC;
+                        Ag = subserie.AG;
+                        Ac = subserie.AC;
                         P = subserie.P;
-                        el = subserie.EL;
+                        El = subserie.EL;
                         FormatoDigital = subserie.FormatoDigital;
-                        ct = subserie.CT;
+                        Ct = subserie.CT;
                         E = subserie.E;
-                        mt = subserie.MT;
+                        Mt = subserie.MT;
                         S = subserie.S;
                         Procedimiento = subserie.Procedimiento;
                         SelectedItemPadre = ItemsPadre.FirstOrDefault(i => ((Serie)i).Id == subserie.SerieId);

@@ -118,12 +118,12 @@
                                 <VerticalStackLayout Spacing="5">
                                     <Label Text="RETENCIÓN:" FontAttributes="Bold" TextColor="#2b0b98"/>
 
-                                    <Grid ColumnDefinitions="*,*">
+                                    <Grid ColumnDefinitions="Auto,*">
                                         <Label Grid.Column="0" Text="AG:" FontAttributes="Bold"/>
                                         <Label Grid.Column="1" Text="{Binding AG}" Margin="5,0,0,0"/>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,*">
+                                    <Grid ColumnDefinitions="Auto,*">
                                         <Label Grid.Column="0" Text="AC:" FontAttributes="Bold"/>
                                         <Label Grid.Column="1" Text="{Binding AC}" Margin="5,0,0,0"/>
                                     </Grid>
@@ -133,7 +133,7 @@
                                         <Label Grid.Column="1" Text="{Binding Soporte}" Margin="5,0,0,0" TextColor="#2b0b98"/>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,*" IsVisible="{Binding FormatoDigital, Converter={StaticResource IsNotNullOrEmptyConverter}}">
+                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding FormatoDigital, Converter={StaticResource IsNotNullOrEmptyConverter}}">
                                         <Label Grid.Column="0" Text="Formato:" FontAttributes="Bold"/>
                                         <Label Grid.Column="1" Text="{Binding FormatoDigital}" Margin="5,0,0,0"/>
                                     </Grid>

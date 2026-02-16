@@ -28,6 +28,10 @@
                        FontSize="18"
                        HorizontalOptions="Center"
                        TextColor="#666666"/>
+                <Label Text="Por: Jonathan Insignares"
+                       FontSize="16"
+                       HorizontalOptions="Center"
+                       TextColor="#666666"/>
             </VerticalStackLayout>
         </Border>
         

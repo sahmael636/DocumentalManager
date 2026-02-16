@@ -40,13 +40,13 @@
             <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource EqualConverter}, ConverterParameter='Subseries'}">
 
                 <Label Text="AG (Archivo de Gestión):" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
-                <Entry Text="{Binding AG}" 
+                <Entry Text="{Binding Ag}" 
                        Keyboard="Numeric"
                        BackgroundColor="#F5F5F5"
                        HeightRequest="40"/>
 
                 <Label Text="AC (Archivo Central):" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
-                <Entry Text="{Binding AC}" 
+                <Entry Text="{Binding Ac}" 
                        Keyboard="Numeric"
                        BackgroundColor="#F5F5F5"
                        HeightRequest="40"/>
@@ -55,7 +55,7 @@
                     <CheckBox Grid.Column="0" IsChecked="{Binding P}"/>
                     <Label Grid.Column="0" Text="Papel" VerticalOptions="Center" Margin="30,0,0,0"/>
 
-                    <CheckBox Grid.Column="1" IsChecked="{Binding EL}"/>
+                    <CheckBox Grid.Column="1" IsChecked="{Binding El}"/>
                     <Label Grid.Column="1" Text="Electrónico" VerticalOptions="Center" Margin="30,0,0,0"/>
                 </Grid>
 
@@ -66,7 +66,7 @@
                         HeightRequest="40"/>
 
                 <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
-                    <CheckBox Grid.Column="0" IsChecked="{Binding CT}"/>
+                    <CheckBox Grid.Column="0" IsChecked="{Binding Ct}"/>
                     <Label Grid.Column="0" Text="Conservación Total" VerticalOptions="Center" Margin="30,0,0,0"/>
 
                     <CheckBox Grid.Column="1" IsChecked="{Binding E}"/>
@@ -74,7 +74,7 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
-                    <CheckBox Grid.Column="0" IsChecked="{Binding MT}"/>
+                    <CheckBox Grid.Column="0" IsChecked="{Binding Mt}"/>
                     <Label Grid.Column="0" Text="Medios Tecnológicos" VerticalOptions="Center" Margin="30,0,0,0"/>
 
                     <CheckBox Grid.Column="1" IsChecked="{Binding S}"/>
