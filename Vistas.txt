@@ -1,0 +1,382 @@
+﻿// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Views\ConsultaPage.xaml
+// ==================================================
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DocumentalManager.Views.ConsultaPage"
+             xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             xmlns:models="clr-namespace:DocumentalManager.Models"
+             x:DataType="viewmodels:ConsultaViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Atrás"
+                     Order="Primary"
+                     Priority="0"
+                     Command="{Binding VolverCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto, Auto, *" Padding="10">
+
+        <!-- Buscador -->
+        <Border Grid.Row="0" 
+                Padding="10"
+                StrokeThickness="1"
+                Stroke="#DDDDDD"
+                Margin="0,0,0,10">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+
+            <Grid ColumnDefinitions="*, Auto">
+                <Entry Grid.Column="0"
+                       Placeholder="Buscar tipo documental..."
+                       Text="{Binding SearchText}"
+                       HeightRequest="40"/>
+
+                <Button Grid.Column="1"
+                        Text="Buscar"
+                        Command="{Binding BuscarCommand}"
+                        BackgroundColor="#4CAF50"
+                        TextColor="White"
+                        WidthRequest="80"
+                        Margin="5,0,0,0"
+                        HeightRequest="40"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator Grid.Row="1"
+                          IsRunning="{Binding IsBusy}"
+                          IsVisible="{Binding IsBusy}"
+                          Color="#2b0b98"
+                          HeightRequest="40"/>
+
+        <!-- Resultados -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Resultados}"
+                        SelectionMode="None"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:BusquedaResultado">
+                    <Border Padding="15"
+                            Margin="0,0,0,10"
+                            StrokeThickness="1"
+                            Stroke="#2b0b98">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10"/>
+                        </Border.StrokeShape>
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label Text="{Binding CodigoCompleto}" 
+                                   FontAttributes="Bold"
+                                   TextColor="#2b0b98"
+                                   FontSize="16"/>
+
+                            <Label Text="{Binding TipoDocumental}" 
+                                   FontSize="18"
+                                   FontAttributes="Bold"/>
+
+                            <Grid ColumnDefinitions="Auto,*" Margin="0,5,0,0">
+                                <Label Grid.Column="0" Text="Fondo:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Fondo}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Subfondo:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Subfondo}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Unidad Adm.:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding UnidadAdministrativa}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Oficina Prod.:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding OficinaProductora}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Serie:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Serie}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0" Text="Subserie:" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="{Binding Subserie}" Margin="5,0,0,0"/>
+                            </Grid>
+
+                            <Border BackgroundColor="#F0F0F0"
+                                    Padding="10"
+                                    Margin="0,10,0,0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="5"/>
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="5">
+                                    <Label Text="RETENCIÓN:" FontAttributes="Bold" TextColor="#2b0b98"/>
+
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Label Grid.Column="0" Text="AG:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding AG}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Label Grid.Column="0" Text="AC:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding AC}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Label Grid.Column="0" Text="Soporte:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding Soporte}" Margin="5,0,0,0" TextColor="#2b0b98"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding FormatoDigital, Converter={StaticResource IsNotNullOrEmptyConverter}}">
+                                        <Label Grid.Column="0" Text="Formato:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding FormatoDigital}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Label Grid.Column="0" Text="Disposición:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="1" Text="{Binding Disposicion}" Margin="5,0,0,0"/>
+                                    </Grid>
+
+                                    <Label Text="Procedimiento:" FontAttributes="Bold" Margin="0,10,0,5"/>
+                                    <Label Text="{Binding Procedimiento}" 
+                                           FontSize="14"
+                                           TextColor="#666666"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" 
+                                    VerticalOptions="Center"
+                                    Spacing="20">
+                    <Label Text="🔍"
+                           FontSize="48"
+                           HorizontalOptions="Center"/>
+                    <Label Text="No hay resultados"
+                           FontSize="18"
+                           TextColor="#666666"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+</ContentPage>
+
+// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Views\ConsultaPage.xaml.cs
+// ==================================================
+using DocumentalManager.ViewModels;
+using Microsoft.Maui.Controls;
+
+namespace DocumentalManager.Views;
+
+public partial class ConsultaPage : ContentPage
+{
+    public ConsultaPage(ConsultaViewModel viewModel)
+    {
+        InitializeComponent();
+        BindingContext = viewModel;
+    }
+
+    // Maneja el evento Navigating del Shell — usa ShellNavigatingEventArgs en .NET MAUI
+    private async void OnNavigatingBack(object sender, ShellNavigatingEventArgs e)
+    {
+        // Cancelar la navegación predeterminada y forzar regreso a la raíz
+        e.Cancel();
+        await Shell.Current.GoToAsync("//");
+    }
+}
+
+// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Views\FormularioPage.xaml
+// ==================================================
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DocumentalManager.Views.FormularioPage"
+             xmlns:viewmodels="clr-namespace:DocumentalManager.ViewModels"
+             x:DataType="viewmodels:FormularioViewModel"
+             Title="{Binding TableName}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <!-- Campos comunes -->
+            <Label Text="Código:" FontSize="16" FontAttributes="Bold"/>
+            <Entry Text="{Binding Codigo}" 
+                   Placeholder="Ingrese código"
+                   BackgroundColor="#F5F5F5"
+                   HeightRequest="40"/>
+
+            <Label Text="Nombre:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+            <Entry Text="{Binding Nombre}" 
+                   Placeholder="Ingrese nombre"
+                   BackgroundColor="#F5F5F5"
+                   HeightRequest="40"/>
+
+            <!-- Selector de padre (excepto para Fondo) -->
+            <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource NotEqualConverter}, ConverterParameter='Fondos'}">
+                <Label Text="{Binding TableName, StringFormat='Seleccione {0} padre:'}" 
+                       FontSize="16" 
+                       FontAttributes="Bold" 
+                       Margin="0,10,0,0"/>
+
+                <Picker ItemsSource="{Binding ItemsPadre}"
+                        SelectedItem="{Binding SelectedItemPadre}"
+                        ItemDisplayBinding="{Binding Nombre}"
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="40"/>
+            </VerticalStackLayout>
+
+            <!-- Campos específicos de Subserie -->
+            <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource EqualConverter}, ConverterParameter='Subseries'}">
+
+                <Label Text="AG (Archivo de Gestión):" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Entry Text="{Binding Ag}" 
+                       Keyboard="Numeric"
+                       BackgroundColor="#F5F5F5"
+                       HeightRequest="40"/>
+
+                <Label Text="AC (Archivo Central):" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Entry Text="{Binding Ac}" 
+                       Keyboard="Numeric"
+                       BackgroundColor="#F5F5F5"
+                       HeightRequest="40"/>
+
+                <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding P}"/>
+                    <Label Grid.Column="0" Text="Papel" VerticalOptions="Center" Margin="30,0,0,0"/>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding El}"/>
+                    <Label Grid.Column="1" Text="Electrónico" VerticalOptions="Center" Margin="30,0,0,0"/>
+                </Grid>
+
+                <Label Text="Formato Digital:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Picker ItemsSource="{Binding FormatosDisponibles}"
+                        SelectedItem="{Binding FormatoDigital}"
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="40"/>
+
+                <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding Ct}"/>
+                    <Label Grid.Column="0" Text="Conservación Total" VerticalOptions="Center" Margin="30,0,0,0"/>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding E}"/>
+                    <Label Grid.Column="1" Text="Eliminación" VerticalOptions="Center" Margin="30,0,0,0"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" Margin="0,10,0,0">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding Mt}"/>
+                    <Label Grid.Column="0" Text="Medios Tecnológicos" VerticalOptions="Center" Margin="30,0,0,0"/>
+
+                    <CheckBox Grid.Column="1" IsChecked="{Binding S}"/>
+                    <Label Grid.Column="1" Text="Selección" VerticalOptions="Center" Margin="30,0,0,0"/>
+                </Grid>
+
+                <Label Text="Procedimiento:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Editor Text="{Binding Procedimiento}" 
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="100"/>
+
+            </VerticalStackLayout>
+
+            <!-- Observación (para todas excepto Subserie) -->
+            <VerticalStackLayout IsVisible="{Binding TableName, Converter={StaticResource NotEqualConverter}, ConverterParameter='Subseries'}">
+                <Label Text="Observación:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Editor Text="{Binding Observacion}" 
+                        BackgroundColor="#F5F5F5"
+                        HeightRequest="100"/>
+            </VerticalStackLayout>
+
+            <!-- Botones -->
+            <Grid ColumnDefinitions="*,*" Margin="0,20,0,0" >
+                <Button Grid.Column="0"
+                        Text="Guardar"
+                        Command="{Binding GuardarCommand}"
+                        BackgroundColor="#4CAF50"
+                        TextColor="White"
+                        HeightRequest="50"
+                        CornerRadius="8"/>
+
+                <Button Grid.Column="1"
+                        Text="Cancelar"
+                        Command="{Binding GoBackCommand}"
+                        BackgroundColor="#F44336"
+                        TextColor="White"
+                        HeightRequest="50"
+                        CornerRadius="8"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
+
+// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Views\FormularioPage.xaml.cs
+// ==================================================
+using DocumentalManager.ViewModels;
+
+namespace DocumentalManager.Views;
+
+[QueryProperty(nameof(TableName), "tableName")]
+[QueryProperty(nameof(PageId), "id")]
+public partial class FormularioPage : ContentPage
+{
+    public FormularioPage(FormularioViewModel viewModel)
+    {
+        InitializeComponent();
+        BindingContext = viewModel;
+    }
+
+    private string tableName;
+    public string TableName
+    {
+        get => tableName;
+        set
+        {
+            tableName = value;
+            if (BindingContext is FormularioViewModel vm && !string.IsNullOrEmpty(value))
+            {
+                vm.TableName = value;
+            }
+        }
+    }
+
+    // Cambiado de 'Id' a 'PageId' para evitar colisiones/reflection AmbiguousMatchException
+    private string pageId;
+    public string PageId
+    {
+        get => pageId;
+        set
+        {
+            pageId = value;
+            if (BindingContext is FormularioViewModel vm)
+            {
+                vm.Id = value; // value ya es string, solo asignarlo directamente
+            }
+        }
+    }
+
+    protected override async void OnNavigatedTo(NavigatedToEventArgs args)
+    {
+        base.OnNavigatedTo(args);
+
+        if (BindingContext is FormularioViewModel vm)
+        {
+            await vm.LoadDataAsync();
+        }
+    }
+}
+

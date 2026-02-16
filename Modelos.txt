@@ -1,0 +1,88 @@
+﻿// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Models\BusquedaResultado.cs
+// ==================================================
+namespace DocumentalManager.Models
+{
+    public class BusquedaResultado
+    {
+        public string Fondo { get; set; } = string.Empty;
+        public string Subfondo { get; set; } = string.Empty;
+        public string UnidadAdministrativa { get; set; } = string.Empty;
+        public string OficinaProductora { get; set; } = string.Empty;
+        public string Serie { get; set; } = string.Empty;
+        public string Subserie { get; set; } = string.Empty;
+        public string TipoDocumental { get; set; } = string.Empty;
+        public string CodigoCompleto { get; set; } = string.Empty;
+
+        // Propiedades de Subserie
+        public int AG { get; set; }
+        public int AC { get; set; }
+        public bool Papel { get; set; }
+        public bool Electronico { get; set; }
+        public string FormatoDigital { get; set; } = string.Empty;
+        public bool ConservacionTotal { get; set; }
+        public bool Eliminacion { get; set; }
+        public bool MediosTecnologicos { get; set; }
+        public bool Seleccion { get; set; }
+        public string Procedimiento { get; set; } = string.Empty;
+
+        // Propiedad calculada para mostrar los soportes (Papel / Electrónico)
+        public string Soporte
+        {
+            get
+            {
+                var parts = new List<string>();
+                if (Papel) parts.Add("Papel");
+                if (Electronico) parts.Add("Electrónico");
+                return parts.Count > 0 ? string.Join(", ", parts) : string.Empty;
+            }
+        }
+
+        // Propiedad calculada para mostrar la disposición abreviada (CT, E, MT, S)
+        public string Disposicion
+        {
+            get
+            {
+                var parts = new List<string>();
+                if (ConservacionTotal) parts.Add("CT");
+                if (Eliminacion) parts.Add("E");
+                if (MediosTecnologicos) parts.Add("MT");
+                if (Seleccion) parts.Add("S");
+                return parts.Count > 0 ? string.Join(", ", parts) : string.Empty;
+            }
+        }
+    }
+}
+
+// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Models\Subserie.cs
+// ==================================================
+namespace DocumentalManager.Models
+{
+    public class Subserie : BaseEntity
+    {
+        public string SerieId { get; set; } = string.Empty;
+        public int AG { get; set; } // Archivo de Gestión
+        public int AC { get; set; } // Archivo Central
+        public bool P { get; set; } // Papel
+        public bool EL { get; set; } // Electrónico
+        public string FormatoDigital { get; set; } = string.Empty;
+        public bool CT { get; set; } // Conservación Total
+        public bool E { get; set; } // Eliminación
+        public bool MT { get; set; } // Medios Tecnológico
+        public bool S { get; set; } // Selección
+        public string Procedimiento { get; set; } = string.Empty;
+    }
+}
+
+// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Models\TipoDocumental.cs
+// ==================================================
+namespace DocumentalManager.Models
+{
+    public class TipoDocumental : BaseEntity
+    {
+        public string SubserieId { get; set; } = string.Empty;
+    }
+}
+

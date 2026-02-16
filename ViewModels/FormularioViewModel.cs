@@ -189,9 +189,9 @@ namespace DocumentalManager.ViewModels
                         Nombre = subserie.Nombre;
                         Ag = subserie.AG;
                         Ac = subserie.AC;
-                        P = subserie.P;
-                        El = subserie.EL;
-                        FormatoDigital = subserie.FormatoDigital;
+                        //P = subserie.P;
+                        //El = subserie.EL;
+                        //FormatoDigital = subserie.FormatoDigital;
                         Ct = subserie.CT;
                         E = subserie.E;
                         Mt = subserie.MT;
@@ -206,6 +206,9 @@ namespace DocumentalManager.ViewModels
                     {
                         Codigo = tipo.Codigo;
                         Nombre = tipo.Nombre;
+                        P = tipo.P;
+                        El = tipo.EL;
+                        FormatoDigital = tipo.FormatoDigital;
                         Observacion = tipo.Observacion;
                         SelectedItemPadre = ItemsPadre.FirstOrDefault(i => ((Subserie)i).Id == tipo.SubserieId);
                     }
@@ -293,9 +296,9 @@ namespace DocumentalManager.ViewModels
                         SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : string.Empty, // Cambiado de 0 a string.Empty
                         AG = ag,
                         AC = ac,
-                        P = P,
-                        EL = el,
-                        FormatoDigital = FormatoDigital,
+                        //P = P,
+                        //EL = el,
+                        //FormatoDigital = FormatoDigital,
                         CT = ct,
                         E = E,
                         MT = mt,
@@ -308,6 +311,9 @@ namespace DocumentalManager.ViewModels
                     {
                         Codigo = Codigo,
                         Nombre = Nombre,
+                        P = P,
+                        EL = el,
+                        FormatoDigital = FormatoDigital,
                         Observacion = Observacion,
                         SubserieId = SelectedItemPadre != null ? ((Subserie)SelectedItemPadre).Id : string.Empty // Cambiado de 0 a string.Empty
                     });
@@ -382,9 +388,9 @@ namespace DocumentalManager.ViewModels
                         subserie.SerieId = SelectedItemPadre != null ? ((Serie)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         subserie.AG = ag;
                         subserie.AC = ac;
-                        subserie.P = P;
-                        subserie.EL = el;
-                        subserie.FormatoDigital = FormatoDigital;
+                        //subserie.P = P;
+                        //subserie.EL = el;
+                        //subserie.FormatoDigital = FormatoDigital;
                         subserie.CT = ct;
                         subserie.E = E;
                         subserie.MT = mt;
@@ -399,6 +405,9 @@ namespace DocumentalManager.ViewModels
                     {
                         tipo.Codigo = Codigo;
                         tipo.Nombre = Nombre;
+                        tipo.P = P;
+                        tipo.EL = el;
+                        tipo.FormatoDigital = FormatoDigital;
                         tipo.Observacion = Observacion;
                         tipo.SubserieId = SelectedItemPadre != null ? ((Subserie)SelectedItemPadre).Id : string.Empty; // Cambiado de 0 a string.Empty
                         await _databaseService.UpdateAsync(tipo);

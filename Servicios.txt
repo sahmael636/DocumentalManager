@@ -1,4 +1,7 @@
-﻿using DocumentalManager.Models;
+﻿// ==================================================
+// Nombre del archivo: C:\Users\asbee\source\repos\sahmael636\DocumentalManager\Services\DatabaseService.cs
+// ==================================================
+using DocumentalManager.Models;
 using SQLite;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +17,7 @@ namespace DocumentalManager.Services
 
         public DatabaseService()
         {
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "GDocumental.db3");
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "documental.db3");
             _database = new SQLiteAsyncConnection(dbPath);
             InitializeTables();
         }
@@ -205,9 +208,9 @@ namespace DocumentalManager.Services
                     CodigoCompleto = codigoCompleto,
                     AG = subserie?.AG ?? 0,
                     AC = subserie?.AC ?? 0,
-                    Papel = tipo?.P ?? false,
-                    Electronico = tipo?.EL ?? false,
-                    FormatoDigital = tipo?.FormatoDigital ?? "",
+                    Papel = subserie?.P ?? false,
+                    Electronico = subserie?.EL ?? false,
+                    FormatoDigital = subserie?.FormatoDigital ?? "",
                     ConservacionTotal = subserie?.CT ?? false,
                     Eliminacion = subserie?.E ?? false,
                     MediosTecnologicos = subserie?.MT ?? false,
@@ -248,9 +251,9 @@ namespace DocumentalManager.Services
                     CodigoCompleto = codigoCompleto,
                     AG = subserie.AG,
                     AC = subserie.AC,
-                    //Papel = subserie.P,
-                    //Electronico = subserie.EL,
-                    //FormatoDigital = subserie.FormatoDigital,
+                    Papel = subserie.P,
+                    Electronico = subserie.EL,
+                    FormatoDigital = subserie.FormatoDigital,
                     ConservacionTotal = subserie.CT,
                     Eliminacion = subserie.E,
                     MediosTecnologicos = subserie.MT,
@@ -308,3 +311,4 @@ namespace DocumentalManager.Services
         } 
     }
 }
+
