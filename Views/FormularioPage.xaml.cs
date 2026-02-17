@@ -4,6 +4,7 @@ namespace DocumentalManager.Views;
 
 [QueryProperty(nameof(TableName), "tableName")]
 [QueryProperty(nameof(PageId), "id")]
+[QueryProperty(nameof(ReadOnly), "readOnly")]
 public partial class FormularioPage : ContentPage
 {
     public FormularioPage(FormularioViewModel viewModel)
@@ -23,6 +24,14 @@ public partial class FormularioPage : ContentPage
             {
                 vm.TableName = value;
             }
+        }
+    }
+    public string ReadOnly
+    {
+        set
+        {
+            if (BindingContext is FormularioViewModel vm)
+                vm.IsReadOnly = value == "true";
         }
     }
 
@@ -50,4 +59,6 @@ public partial class FormularioPage : ContentPage
             await vm.LoadDataAsync();
         }
     }
+
+
 }

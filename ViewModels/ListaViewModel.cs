@@ -162,6 +162,20 @@ namespace DocumentalManager.ViewModels
         }
 
         [RelayCommand]
+        private async Task VerDetalle(object item)
+        {
+            if (item == null) return;
+
+            var id = item.GetType().GetProperty("Id")?.GetValue(item)?.ToString();
+            if (string.IsNullOrWhiteSpace(id)) return;
+
+            await Shell.Current.GoToAsync(
+                $"FormularioPage?tableName={TableName}&id={Uri.EscapeDataString(id)}&readOnly=true"
+            );
+        }
+
+
+        [RelayCommand]
         private void FilterItems()
         {
             FilteredItems.Clear();

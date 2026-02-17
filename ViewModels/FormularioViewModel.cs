@@ -62,6 +62,16 @@ namespace DocumentalManager.ViewModels
         private string procedimiento;
 
         [ObservableProperty]
+        private bool isReadOnly;
+
+        public bool IsEditable => !isReadOnly;
+
+        partial void OnIsReadOnlyChanged(bool value)
+        {
+            OnPropertyChanged(nameof(IsEditable));
+        }
+
+        [ObservableProperty]
         private ObservableCollection<string> formatosDisponibles = new ObservableCollection<string>
         {
             "PDF", "XLS", "JPG", "PNG", "DOC", "MP4", "MP3", "TXT"
