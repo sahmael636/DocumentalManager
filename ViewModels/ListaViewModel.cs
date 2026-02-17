@@ -720,8 +720,8 @@ namespace DocumentalManager.ViewModels
                                 { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
                                 { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
                                 { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "P", "EL", "FormatoDigital", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
                             };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
