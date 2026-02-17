@@ -20,6 +20,9 @@ namespace DocumentalManager.ViewModels
         [ObservableProperty]
         private string tableName;
 
+        [ObservableProperty] private string parentId;
+        [ObservableProperty] private string parentKey;
+
         [ObservableProperty]
         private ObservableCollection<object> items;
 
@@ -55,28 +58,107 @@ namespace DocumentalManager.ViewModels
                 IsBusy = false;
             }
         }
+        private List<object> ApplyParentFilter<T>(List<T> items) where T : class
+        {
+            if (string.IsNullOrWhiteSpace(ParentId) || string.IsNullOrWhiteSpace(ParentKey))
+                return items.Cast<object>().ToList();
 
+            var prop = typeof(T).GetProperty(ParentKey);
+            if (prop == null)
+                return items.Cast<object>().ToList(); // si no existe, no filtra
+
+            return items
+                .Where(x => (prop.GetValue(x)?.ToString() ?? "") == ParentId)
+                .Cast<object>()
+                .ToList();
+        }
         private async Task<IEnumerable<object>> GetItemsFromTable()
         {
             switch (TableName)
             {
                 case "Fondos":
                     return await _databaseService.GetAllAsync<Fondo>();
+
                 case "Subfondos":
-                    return await _databaseService.GetAllAsync<Subfondo>();
+                    //return await _databaseService.GetAllAsync<Subfondo>();
+                    var all = await _databaseService.GetAllAsync<Subfondo>();
+                    return ApplyParentFilter(all);
                 case "UnidadesAdministrativas":
-                    return await _databaseService.GetAllAsync<UnidadAdministrativa>();
+                    //return await _databaseService.GetAllAsync<UnidadAdministrativa>();
+                    var all2 = await _databaseService.GetAllAsync<UnidadAdministrativa>();
+                    return ApplyParentFilter(all2);
                 case "OficinasProductoras":
-                    return await _databaseService.GetAllAsync<OficinaProductora>();
+                    //return await _databaseService.GetAllAsync<OficinaProductora>();
+                    var all3 = await _databaseService.GetAllAsync<OficinaProductora>();
+                    return ApplyParentFilter(all3);
                 case "Series":
-                    return await _databaseService.GetAllAsync<Serie>();
+                    //return await _databaseService.GetAllAsync<Serie>();
+                    var all4 = await _databaseService.GetAllAsync<Serie>();
+                    return ApplyParentFilter(all4);
                 case "Subseries":
-                    return await _databaseService.GetAllAsync<Subserie>();
+                    //return await _databaseService.GetAllAsync<Subserie>();
+                    var all5 = await _databaseService.GetAllAsync<Subserie>();
+                    return ApplyParentFilter(all5);
                 case "TiposDocumentales":
-                    return await _databaseService.GetAllAsync<TipoDocumental>();
+                    //return await _databaseService.GetAllAsync<TipoDocumental>();
+                    var all6 = await _databaseService.GetAllAsync<TipoDocumental>();
+                    return ApplyParentFilter(all6);
                 default:
                     return new List<object>();
             }
+        }
+
+        [RelayCommand]
+        private async Task VerHijos(object item)
+        {
+            if (item == null) return;
+
+            // toma el Id del item actual (tus entidades tienen Id string)
+            var id = item.GetType().GetProperty("Id")?.GetValue(item)?.ToString();
+            if (string.IsNullOrWhiteSpace(id)) return;
+
+            // define siguiente tabla + clave FK según la tabla actual
+            string nextTable = null;
+            string nextParentKey = null;
+
+            switch (TableName)
+            {
+                case "Fondos":
+                    nextTable = "Subfondos";
+                    nextParentKey = "FondoId";
+                    break;
+
+                case "Subfondos":
+                    nextTable = "UnidadesAdministrativas";
+                    nextParentKey = "SubfondoId";
+                    break;
+
+                case "UnidadesAdministrativas":
+                    nextTable = "OficinasProductoras";
+                    nextParentKey = "UnidadAdministrativaId";
+                    break;
+
+                case "OficinasProductoras":
+                    nextTable = "Series";
+                    nextParentKey = "OficinaProductoraId";
+                    break;
+
+                case "Series":
+                    nextTable = "Subseries";
+                    nextParentKey = "SerieId";
+                    break;
+
+                case "Subseries":
+                    nextTable = "TiposDocumentales";
+                    nextParentKey = "SubserieId";
+                    break;
+            }
+
+            if (nextTable == null) return;
+
+            await Shell.Current.GoToAsync(
+                $"ListaPage?tableName={nextTable}&parentId={Uri.EscapeDataString(id)}&parentKey={Uri.EscapeDataString(nextParentKey)}"
+            );
         }
 
         [RelayCommand]

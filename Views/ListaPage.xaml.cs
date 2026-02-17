@@ -3,11 +3,16 @@
 namespace DocumentalManager.Views;
 
 [QueryProperty(nameof(TableName), "tableName")]
+[QueryProperty(nameof(ParentId), "parentId")]
+[QueryProperty(nameof(ParentKey), "parentKey")]   // ej: FondoId, SubfondoId, ...
 public partial class ListaPage : ContentPage
 {
     private ListaViewModel _viewModel;
 
     private string _tableName;
+    
+
+
     public string TableName
     {
         get => _tableName;
@@ -20,6 +25,8 @@ public partial class ListaPage : ContentPage
             }
         }
     }
+    public string ParentId { set => _viewModel.ParentId = value; }
+    public string ParentKey { set => _viewModel.ParentKey = value; }
 
     public ListaPage(ListaViewModel viewModel)
     {

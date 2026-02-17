@@ -83,9 +83,15 @@
                             <RoundRectangle CornerRadius="5"/>
                         </Border.StrokeShape>
 
-                        <Grid ColumnDefinitions="*, Auto,Auto">
+                        <Grid ColumnDefinitions="*, Auto,Auto,Auto">
 
                             <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <VerticalStackLayout.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.VerDetalleCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </VerticalStackLayout.GestureRecognizers>
+
                                 <Label Text="{Binding Codigo}" 
                                        FontAttributes="Bold"
                                        TextColor="#2b0b98"/>
@@ -111,6 +117,12 @@
                                     CommandParameter="{Binding .}"
                                     BackgroundColor="#F44336"
                                     TextColor="White"
+                                    WidthRequest="40"
+                                    Margin="5"/>
+                            <Button Grid.Column="3"
+                                    Text="➡"
+                                    Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.VerHijosCommand}"
+                                    CommandParameter="{Binding .}"
                                     WidthRequest="40"
                                     Margin="5"/>
 
