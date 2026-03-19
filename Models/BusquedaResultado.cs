@@ -1,6 +1,11 @@
-﻿namespace DocumentalManager.Models
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System.Collections.Generic;
+using System.Windows.Input;
+
+namespace DocumentalManager.Models
 {
-    public class BusquedaResultado
+    public partial class BusquedaResultado : ObservableObject
     {
         public string Fondo { get; set; } = string.Empty;
         public string Subfondo { get; set; } = string.Empty;
@@ -41,12 +46,36 @@
             get
             {
                 var parts = new List<string>();
-                if (ConservacionTotal) parts.Add("CT");
-                if (Eliminacion) parts.Add("E");
-                if (MediosTecnologicos) parts.Add("MT");
-                if (Seleccion) parts.Add("S");
+                if (ConservacionTotal) parts.Add("Cons Total");
+                if (Eliminacion) parts.Add("Elimin");
+                if (MediosTecnologicos) parts.Add("Med Tec");
+                if (Seleccion) parts.Add("Selec");
                 return parts.Count > 0 ? string.Join(", ", parts) : string.Empty;
             }
+        }
+
+        // Estado de despliegue del procedimiento (no se persiste en DB)
+        [ObservableProperty]
+        private bool procedimientoExpanded;
+
+        // Controla cuántas líneas mostrar (1 por defecto, ilimitado cuando está expandido)
+        public int ProcedimientoMaxLines => ProcedimientoExpanded ? int.MaxValue : 1;
+
+        // Texto para el botón/label de alternancia
+        public string ProcedimientoToggleText => ProcedimientoExpanded ? "Mostrar menos" : "Mostrar más";
+
+        // Comando para alternar el estado (se enlazará desde la plantilla)
+        private RelayCommand? _toggleProcedimientoCommand;
+        public ICommand ToggleProcedimientoCommand => _toggleProcedimientoCommand ??= new RelayCommand(() =>
+        {
+            ProcedimientoExpanded = !ProcedimientoExpanded;
+        });
+
+        // Cuando cambia el booleano, notificar que ProcedimientoMaxLines y el texto cambiaron
+        partial void OnProcedimientoExpandedChanged(bool value)
+        {
+            OnPropertyChanged(nameof(ProcedimientoMaxLines));
+            OnPropertyChanged(nameof(ProcedimientoToggleText));
         }
     }
 }

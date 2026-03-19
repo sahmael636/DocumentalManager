@@ -119,12 +119,12 @@
                                     <Label Text="RETENCIÓN:" FontAttributes="Bold" TextColor="#2b0b98"/>
 
                                     <Grid ColumnDefinitions="Auto,*">
-                                        <Label Grid.Column="0" Text="AG:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="0" Text="Arch Gestión:" FontAttributes="Bold"/>
                                         <Label Grid.Column="1" Text="{Binding AG}" Margin="5,0,0,0"/>
                                     </Grid>
 
                                     <Grid ColumnDefinitions="Auto,*">
-                                        <Label Grid.Column="0" Text="AC:" FontAttributes="Bold"/>
+                                        <Label Grid.Column="0" Text="Arch Central:" FontAttributes="Bold"/>
                                         <Label Grid.Column="1" Text="{Binding AC}" Margin="5,0,0,0"/>
                                     </Grid>
 
@@ -144,10 +144,25 @@
                                     </Grid>
 
                                     <Label Text="Procedimiento:" FontAttributes="Bold" Margin="0,10,0,5"/>
-                                    <Label Text="{Binding Procedimiento}" 
-                                           FontSize="14"
-                                           TextColor="#666666"/>
-                                </VerticalStackLayout>
+                                    <Label Grid.Column="1"
+										   Text="{Binding Procedimiento}"
+										   FontSize="14"
+										   TextColor="#666666"
+										   MaxLines="{Binding ProcedimientoMaxLines}">
+                                        <Label.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding ToggleProcedimientoCommand}" NumberOfTapsRequired="1" />
+                                        </Label.GestureRecognizers>
+                                    </Label>
+
+                                    <!-- Botón para alternar Mostrar más / Mostrar menos -->
+                                    <Button Text="{Binding ProcedimientoToggleText}"
+                                            Command="{Binding ToggleProcedimientoCommand}"
+                                            BackgroundColor="Transparent"
+                                            TextColor="#2b0b98"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Start"
+                                            Padding="0"
+                                            Margin="4,4,4,4"/>                                </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>
                     </Border>
