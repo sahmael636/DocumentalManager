@@ -789,7 +789,54 @@ namespace DocumentalManager.ViewModels
         {
             try
             {
-                var filePath = Path.Combine(FileSystem.CacheDirectory, $"{TableName}_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+                // Determinar carpeta "Descargas" por plataforma (fallback seguro)
+                string folderPath = FileSystem.CacheDirectory;
+
+                if (OperatingSystem.IsWindows())
+                {
+                    var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                    var downloads = Path.Combine(userProfile, "Downloads");
+                    folderPath = Directory.Exists(downloads) ? downloads : userProfile;
+                }
+                else if (OperatingSystem.IsAndroid())
+                {
+                    // Pedir permiso de escritura en tiempo de ejecución
+                    var permStatus = await Permissions.RequestAsync<Permissions.StorageWrite>();
+                    if (permStatus == PermissionStatus.Granted)
+                    {
+#if ANDROID
+                        var downloads = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads)?.AbsolutePath;
+                        if (!string.IsNullOrEmpty(downloads) && Directory.Exists(downloads))
+                        {
+                            folderPath = downloads;
+                        }
+                        else
+                        {
+                            // Si no existe o no se puede obtener, escribir en AppData
+                            folderPath = FileSystem.AppDataDirectory;
+                        }
+#else
+                        folderPath = FileSystem.AppDataDirectory;
+#endif
+                    }
+                    else
+                    {
+                        // Sin permiso: fallback a cache/app dir
+                        folderPath = FileSystem.CacheDirectory;
+                    }
+                }
+                else if (OperatingSystem.IsMacOS())
+                {
+                    var downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Downloads");
+                    folderPath = Directory.Exists(downloads) ? downloads : FileSystem.AppDataDirectory;
+                }
+                else if (OperatingSystem.IsIOS())
+                {
+                    // iOS no expone una carpeta pública "Downloads" — usar carpeta de la app
+                    folderPath = FileSystem.AppDataDirectory;
+                }
+
+                var filePath = Path.Combine(folderPath, $"{TableName}_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
 
                 switch (TableName)
                 {
@@ -810,15 +857,15 @@ namespace DocumentalManager.ViewModels
                                 var tipos = await _databaseService.GetAllAsync<TipoDocumental>();
 
                                 var sheets = new Dictionary<string, (IEnumerable<object>, string[], Type)>
-                            {
-                                { "Fondos", (fondos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion" }, typeof(Fondo)) },
-                                { "Subfondos", (subfondos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "FondoId" }, typeof(Subfondo)) },
-                                { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
-                                { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
-                                { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "P", "EL", "FormatoDigital", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
-                            };
+                                {
+                                    { "Fondos", (fondos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion" }, typeof(Fondo)) },
+                                    { "Subfondos", (subfondos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "FondoId" }, typeof(Subfondo)) },
+                                    { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
+                                    { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
+                                    { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
+                                    { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "P", "EL", "FormatoDigital", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
                             }
@@ -846,14 +893,14 @@ namespace DocumentalManager.ViewModels
                                 var tipos = await _databaseService.GetAllAsync<TipoDocumental>();
 
                                 var sheets = new Dictionary<string, (IEnumerable<object>, string[], Type)>
-                            {
-                                { "Subfondos", (subfondos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "FondoId" }, typeof(Subfondo)) },
-                                { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
-                                { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
-                                { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
-                            };
+                                {
+                                    { "Subfondos", (subfondos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "FondoId" }, typeof(Subfondo)) },
+                                    { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
+                                    { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
+                                    { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
+                                    { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
                             }
@@ -880,13 +927,13 @@ namespace DocumentalManager.ViewModels
                                 var tipos = await _databaseService.GetAllAsync<TipoDocumental>();
 
                                 var sheets = new Dictionary<string, (IEnumerable<object>, string[], Type)>
-                            {
-                                { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
-                                { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
-                                { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
-                            };
+                                {
+                                    { "UnidadesAdministrativas", (unidades.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubfondoId" }, typeof(UnidadAdministrativa)) },
+                                    { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
+                                    { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
+                                    { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
                             }
@@ -912,12 +959,12 @@ namespace DocumentalManager.ViewModels
                                 var tipos = await _databaseService.GetAllAsync<TipoDocumental>();
 
                                 var sheets = new Dictionary<string, (IEnumerable<object>, string[], Type)>
-                            {
-                                { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
-                                { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
-                            };
+                                {
+                                    { "OficinasProductoras", (oficinas.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "UnidadAdministrativaId" }, typeof(OficinaProductora)) },
+                                    { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
+                                    { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
                             }
@@ -942,11 +989,11 @@ namespace DocumentalManager.ViewModels
                                 var tipos = await _databaseService.GetAllAsync<TipoDocumental>();
 
                                 var sheets = new Dictionary<string, (IEnumerable<object>, string[], Type)>
-                            {
-                                { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
-                            };
+                                {
+                                    { "Series", (series.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "OficinaProductoraId" }, typeof(Serie)) },
+                                    { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
                             }
@@ -970,13 +1017,13 @@ namespace DocumentalManager.ViewModels
                                 var tipos = await _databaseService.GetAllAsync<TipoDocumental>();
 
                                 var sheets = new Dictionary<string, (IEnumerable<object>, string[], Type)>
-                            {
-                                //{ "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                //{ "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
-                                { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
-                                { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "P", "EL", "FormatoDigital", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                {
+                                    //{ "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "P", "EL", "FormatoDigital", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    //{ "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
+                                    { "Subseries", (subseries.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "Observacion", "SerieId", "AG", "AC", "CT", "E", "MT", "S", "Procedimiento" }, typeof(Subserie)) },
+                                    { "TiposDocumentales", (tipos.Cast<object>(), new[] { "Id", "Codigo", "Nombre", "P", "EL", "FormatoDigital", "Observacion", "SubserieId" }, typeof(TipoDocumental)) },
 
-                            };
+                                };
 
                                 await _excelService.ExportarMultiplesAExcel(sheets, filePath);
                             }
